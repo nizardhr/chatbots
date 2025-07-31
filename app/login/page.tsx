@@ -25,7 +25,11 @@ export default function LoginPage() {
     const { data, error } = await signIn(email, password);
 
     if (error) {
-      setError(error.message);
+      if (error.message.includes('Email not confirmed')) {
+        setError('Please check your email and click the confirmation link to verify your account before signing in.');
+      } else {
+        setError(error.message);
+      }
     } else if (data.user) {
       router.push('/dashboard');
     }

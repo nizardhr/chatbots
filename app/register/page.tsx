@@ -40,7 +40,11 @@ export default function RegisterPage() {
 
     if (error) {
       setError(error.message);
-    } else {
+    } else if (data.user && !data.user.email_confirmed_at) {
+      // User created but needs email confirmation
+      setError('Please check your email and click the confirmation link before signing in.');
+    } else if (data.user) {
+      // User created and confirmed (or confirmation disabled)
       setSuccess(true);
       setTimeout(() => {
         router.push('/dashboard');
