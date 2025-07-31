@@ -12,43 +12,64 @@ A comprehensive SaaS platform for creating and managing AI-powered chatbots with
 - 📁 Knowledge base uploads
 - 🔐 Secure authentication
 
-## Getting Started
+## Setup Instructions
 
-### Local Development (No Supabase Required)
-
-The app is configured to work with mock data for local development. You can start building and testing immediately:
-
-```bash
-npm run dev
-```
-
-The app will run with a mock authentication system and in-memory data storage.
-
-### Production Setup with Supabase
-
-When you're ready to deploy or want to use real data:
+### 1. Supabase Setup
 
 1. **Create a Supabase project** at [supabase.com](https://supabase.com)
 
-2. **Update environment variables** in `.env.local`:
-   ```env
+2. **Run the database migration**:
+   - Go to your Supabase project dashboard
+   - Navigate to SQL Editor
+   - Copy and run the SQL from `supabase/migrations/20250731184435_fierce_sun.sql`
+
+3. **Configure Storage**:
+   - Go to Storage in your Supabase dashboard
+   - The migration should have created a `knowledge-base` bucket
+   - Verify the bucket exists and has proper policies
+
+4. **Get your credentials**:
+   - Go to Settings > API
+   - Copy your Project URL and anon/public key
+
+### 2. Environment Variables
+
+Create a `.env.local` file with your Supabase credentials:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+### 3. Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+### 4. Netlify Deployment
+
+1. **Build the project**:
+   ```bash
+   npm run build
+   ```
+
+2. **Deploy to Netlify**:
+   - Connect your GitHub repo to Netlify
+   - Set build command: `npm run build`
+   - Set publish directory: `out`
+   - Add environment variables in Netlify dashboard
+
+3. **Environment Variables for Netlify**:
+   ```
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   NEXT_PUBLIC_SITE_URL=https://your-site.netlify.app
    ```
 
-3. **Run the database migrations** in your Supabase SQL editor:
-   - Copy the contents of `supabase/migrations/create_chatbot_platform_schema.sql`
-   - Run it in your Supabase project's SQL editor
-
-4. **Install Supabase client** (if not already installed):
-   ```bash
-   npm install @supabase/supabase-js
-   ```
-
-The app will automatically switch from mock mode to real Supabase when valid credentials are provided.
-
-## API Keys Required for Full Functionality
+## API Keys Required
 
 - **OpenRouter API Key**: For AI chat functionality
 - **ElevenLabs API Key**: For voice features (optional)
@@ -63,13 +84,36 @@ The app will automatically switch from mock mode to real Supabase when valid cre
 └── public/               # Static assets
 ```
 
-## Deployment
+## Features Overview
 
-The app is ready for deployment on Vercel or any Next.js-compatible platform. Make sure to set your environment variables in your deployment platform.
+### Authentication
+- Secure user registration and login via Supabase Auth
+- Session management and protected routes
 
-## Development vs Production
+### Dashboard
+- View all created chatbots
+- Monitor token usage and payment status
+- Quick access to edit, delete, and embed code
 
-- **Development**: Uses mock data, no external dependencies required
-- **Production**: Requires Supabase setup and API keys for full functionality
+### Chatbot Creation
+- Configure AI models via OpenRouter
+- Upload knowledge base files (PDF, TXT, DOCX)
+- Enable voice synthesis with ElevenLabs
+- Set up lead capture functionality
+- Customize themes and appearance
 
-This approach allows you to start developing immediately while having a clear path to production deployment.
+### Embeddable Widget
+- Generate JavaScript embed code
+- Customizable chat widget for any website
+- Voice playback and lead capture support
+- Payment status indicators
+
+### Analytics & Billing
+- Track token usage per chatbot
+- Monthly payment reminders
+- Usage cost estimates
+- Lead capture analytics
+
+## Support
+
+For issues or questions, please check the documentation or create an issue in the repository.
