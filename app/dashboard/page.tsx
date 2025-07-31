@@ -26,7 +26,7 @@ interface Chatbot {
 
 interface UserProfile {
   id: string;
-  email: string;
+  email?: string | null;
 }
 
 export default function DashboardPage() {
