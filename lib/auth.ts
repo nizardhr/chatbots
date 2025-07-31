@@ -33,3 +33,10 @@ export async function getSession() {
   const { data: { session }, error } = await supabase.auth.getSession();
   return { session, error };
 }
+
+export async function updatePassword(newPassword: string) {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword
+  });
+  return { data, error };
+}

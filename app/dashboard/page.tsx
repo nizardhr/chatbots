@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreVertical, Bot, Mic, Mail, AlertTriangle, Calendar, LogOut, User } from 'lucide-react';
+import { Plus, MoreVertical, Bot, Mic, Mail, AlertTriangle, Calendar, LogOut, User, Settings } from 'lucide-react';
 
 interface Chatbot {
   id: string;
@@ -160,6 +160,12 @@ export default function DashboardPage() {
                 <User className="h-4 w-4 text-gray-500" />
                 <span className="text-sm text-gray-700">{user?.email}</span>
               </div>
+              <Link href="/settings">
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <Settings className="h-4 w-4" />
+                  <span>Settings</span>
+                </Button>
+              </Link>
               <Button variant="outline" onClick={handleSignOut} className="flex items-center space-x-2">
                 <LogOut className="h-4 w-4" />
                 <span>Sign Out</span>
