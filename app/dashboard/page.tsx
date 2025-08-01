@@ -120,9 +120,13 @@ export default function DashboardPage() {
 
   const handleGetEmbedCode = (chatbotId: string) => {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yvexanchatbots.netlify.app';
+    console.log('Generating embed code for chatbot:', chatbotId);
+    console.log('Site URL:', siteUrl);
+    
     const embedCode = `<!-- Chatbot Embed Code -->
 <script>
   console.log('Loading chatbot embed script for ID: ${chatbotId}');
+  console.log('Full embed URL: ${siteUrl}/embed/${chatbotId}.js');
   const script = document.createElement('script');
   script.src = '${siteUrl}/embed/${chatbotId}.js';
   script.async = true;

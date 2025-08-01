@@ -5,11 +5,14 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const chatbotId = params.id;
+  // Remove .js extension if present
+  const chatbotId = params.id.replace(/\.js$/, '');
   
   console.log('=== EMBED SCRIPT DEBUG ===');
   console.log('Requested chatbot ID:', chatbotId);
   console.log('Request URL:', request.url);
+  console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log('Supabase Key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   
   // CORS headers
   const corsHeaders = {
@@ -23,6 +26,15 @@ export async function GET(
     // First, let's check if we can connect to Supabase
     console.log('Attempting to connect to Supabase...');
     
+    // Test basic connection
+    const { data: testData, error: testError } = await supabase
+      .from('chatbots')
+      .select('count')
+      .limit(1);
+    
+    console.log('Database test query result:', testData);
+    console.log('Database test error:', testError);
+    
     // Get all chatbots to debug
     const { data: allChatbots, error: allError } = await supabase
       .from('chatbots')
@@ -30,6 +42,7 @@ export async function GET(
     
     console.log('All chatbots in database:', allChatbots);
     console.log('Database connection error (if any):', allError);
+    console.log('Number of chatbots found:', allChatbots?.length || 0);
     
     // Get specific chatbot
     const { data: chatbot, error } = await supabase
@@ -44,9 +57,14 @@ export async function GET(
     if (error || !chatbot) {
       console.log('Chatbot not found, returning error script');
       const errorScript = `
-console.error("Chatbot not found");
-console.log("Requested ID: ${chatbotId}");
+console.error("Chatbot not found: ${chatbotId}");
+console.log("Raw requested ID: ${params.id}");
+console.log("Cleaned chatbot ID: ${chatbotId}");
 console.log("Available chatbots:", ${JSON.stringify(allChatbots?.map(c => ({ id: c.id, name: c.name })) || [])});
+console.log("Database error:", ${JSON.stringify(allError)});
+console.log("Specific chatbot error:", ${JSON.stringify(error)});
+console.log("Environment check - Supabase URL:", "${process.env.NEXT_PUBLIC_SUPABASE_URL}");
+console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY});
 `;
       
       return new NextResponse(errorScript, { 
@@ -387,8 +405,10 @@ console.log("Available chatbots:", ${JSON.stringify(allChatbots?.map(c => ({ id:
   } catch (error) {
     console.error('Embed script error:', error);
     const errorScript = `
-console.error('Embed script error: ${error}');
-console.log('Requested chatbot ID: ${chatbotId}');
+console.error('Embed script error:', ${JSON.stringify(error.message)});
+console.log('Raw requested ID: ${params.id}');
+console.log('Cleaned chatbot ID: ${chatbotId}');
+console.log('Full error object:', ${JSON.stringify(error, Object.getOwnPropertyNames(error))});
 `;
     return new NextResponse(errorScript, { 
       status: 200, // Return 200 so the script loads
