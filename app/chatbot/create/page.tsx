@@ -183,6 +183,9 @@ export default function CreateChatbotPage() {
         .select()
         .single();
 
+      console.log('Chatbot creation result:', chatbotData);
+      console.log('Chatbot creation error:', chatbotError);
+
       if (chatbotError) {
         throw chatbotError;
       }

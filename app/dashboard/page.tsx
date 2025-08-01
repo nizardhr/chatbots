@@ -52,12 +52,17 @@ export default function DashboardPage() {
   const fetchChatbots = async (userId: string) => {
     setLoading(true);
     
+    console.log('Fetching chatbots for user:', userId);
+    
     // Fetch chatbots
     const { data: chatbotsData, error: chatbotsError } = await supabase
       .from('chatbots')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
+
+    console.log('Dashboard chatbots query result:', chatbotsData);
+    console.log('Dashboard chatbots query error:', chatbotsError);
 
     if (chatbotsError) {
       console.error('Error fetching chatbots:', chatbotsError);

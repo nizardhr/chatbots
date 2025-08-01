@@ -403,6 +403,16 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
     });
 
   } catch (error) {
+    
+    // Check if this is an RLS issue by trying without RLS
+    console.log('Attempting query without RLS restrictions...');
+    const { data: publicData, error: publicError } = await supabase
+      .from('chatbots')
+      .select('id, name, user_id')
+      .limit(5);
+    
+    console.log('Public query result:', publicData);
+    console.log('Public query error:', publicError);
     console.error('Embed script error:', error);
     const errorScript = `
 console.error('Embed script error:', ${JSON.stringify(error instanceof Error ? error.message : String(error))});
