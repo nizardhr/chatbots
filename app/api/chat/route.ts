@@ -19,13 +19,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare messages for OpenRouter
-    const messages = [
+    const messages: ChatMessage[] = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: chatbot.prompt || 'You are a helpful AI assistant.',
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: message,
       },
     ];
