@@ -21,6 +21,8 @@ import { CalendarIcon, Upload, ArrowLeft, Bot, Mic, Database, Palette, Save, Use
 import { FileUpload } from '@/components/ui/file-upload';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { DesignPanel } from '@/components/ui/design-panel';
+import { ChatbotPreview } from '@/components/ui/chatbot-preview';
 import Link from 'next/link';
 
 interface OpenRouterModel {
@@ -45,6 +47,7 @@ export default function EditChatbotPage() {
   const [models, setModels] = useState<OpenRouterModel[]>([]);
   const [voices, setVoices] = useState<ElevenLabsVoice[]>([]);
   const [files, setFiles] = useState<FileList | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const router = useRouter();
   const params = useParams();
   const chatbotId = params?.id as string;
@@ -80,6 +83,102 @@ export default function EditChatbotPage() {
     },
   });
 
+  // Initialize design config with defaults if not present
+  const initializeDesignConfig = (data: any) => {
+    return {
+      ...data,
+      widget_width: data.widget_width || '350px',
+      widget_height: data.widget_height || '500px',
+      border_radius: data.border_radius || '12px',
+      widget_padding: data.widget_padding || '16px',
+      widget_margin: data.widget_margin || '20px',
+      color_scheme: data.color_scheme || {
+        background: '#ffffff',
+        header: '#000000',
+        botMessage: '#f3f4f6',
+        userMessage: '#3b82f6',
+        textPrimary: '#111827',
+        textSecondary: '#6b7280',
+        inputField: '#ffffff',
+        inputBorder: '#d1d5db',
+        buttonPrimary: '#3b82f6',
+        buttonSecondary: '#6b7280',
+        accent: '#8b5cf6',
+        success: '#10b981',
+        warning: '#f59e0b',
+        error: '#ef4444'
+      },
+      typography: data.typography || {
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+        headerSize: '18px',
+        messageSize: '14px',
+        inputSize: '14px',
+        headerWeight: '600',
+        messageWeight: '400',
+        inputWeight: '400'
+      },
+      header_config: data.header_config || {
+        showHeader: true,
+        customTitle: '',
+        showLogo: true,
+        showOwnerName: false,
+        headerHeight: '60px',
+        logoSize: '32px'
+      },
+      bubble_config: data.bubble_config || {
+        showTail: true,
+        alignment: 'left',
+        animation: 'fade',
+        spacing: '8px',
+        maxWidth: '80%',
+        borderRadius: '18px'
+      },
+      input_config: data.input_config || {
+        placeholder: 'Type your message...',
+        borderRadius: '24px',
+        showMicButton: true,
+        showSendButton: true,
+        buttonStyle: 'modern',
+        height: '48px'
+      },
+      footer_config: data.footer_config || {
+        showPoweredBy: true,
+        customBrandingUrl: 'https://yvexan-agency.com',
+        customBrandingText: 'Powered by Yvexan Agency',
+        showCTA: false,
+        ctaText: '',
+        ctaUrl: ''
+      },
+      voice_config: data.voice_config || {
+        model: 'eleven_monolingual_v1',
+        autoDetectLanguage: false,
+        streamingMode: false,
+        autoReadMessages: true,
+        pushToTalk: false,
+        continuousMic: false,
+        voiceSpeed: 1.0,
+        outputFormat: 'mp3_44100_128'
+      },
+      animation_config: data.animation_config || {
+        messageAnimation: 'slideUp',
+        typingIndicator: true,
+        soundEffects: false,
+        hoverEffects: true,
+        transitionDuration: '300ms'
+      },
+      responsive_config: data.responsive_config || {
+        mobileWidth: '100%',
+        mobileHeight: '100vh',
+        tabletWidth: '400px',
+        tabletHeight: '600px',
+        breakpoints: {
+          mobile: '768px',
+          tablet: '1024px'
+        }
+      }
+    };
+  };
+
   useEffect(() => {
     const checkUserAndLoadChatbot = async () => {
       const { user, error } = await getCurrentUser();
@@ -108,7 +207,7 @@ export default function EditChatbotPage() {
       return;
     }
 
-    setFormData({
+    const initializedData = initializeDesignConfig({
       name: data.name,
       owner_name: data.owner_name || '',
       bot_avatar_url: data.bot_avatar_url || '',
@@ -136,7 +235,24 @@ export default function EditChatbotPage() {
         secondaryColor: '#ffffff',
         welcomeMessage: 'Hi! How can I help you today?',
       },
+      // Include all the design fields from the database
+      widget_width: data.widget_width,
+      widget_height: data.widget_height,
+      border_radius: data.border_radius,
+      widget_padding: data.widget_padding,
+      widget_margin: data.widget_margin,
+      color_scheme: data.color_scheme,
+      typography: data.typography,
+      header_config: data.header_config,
+      bubble_config: data.bubble_config,
+      input_config: data.input_config,
+      footer_config: data.footer_config,
+      voice_config: data.voice_config,
+      animation_config: data.animation_config,
+      responsive_config: data.responsive_config,
     });
+
+    setFormData(initializedData);
 
     setLoading(false);
 
@@ -227,6 +343,18 @@ export default function EditChatbotPage() {
     }
   };
 
+  const handleVoicePreview = async (voiceId: string, text: string) => {
+    if (!formData.elevenlabs_api_key) return;
+    
+    try {
+      // This would call ElevenLabs API to generate preview audio
+      console.log('Voice preview:', voiceId, text);
+      // Implementation would go here
+    } catch (error) {
+      console.error('Voice preview error:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -258,6 +386,20 @@ export default function EditChatbotPage() {
           footer_branding: formData.footer_branding,
           theme_settings: formData.theme_settings,
           updated_at: new Date().toISOString(),
+          widget_width: formData.widget_width,
+          widget_height: formData.widget_height,
+          border_radius: formData.border_radius,
+          widget_padding: formData.widget_padding,
+          widget_margin: formData.widget_margin,
+          color_scheme: formData.color_scheme,
+          typography: formData.typography,
+          header_config: formData.header_config,
+          bubble_config: formData.bubble_config,
+          input_config: formData.input_config,
+          footer_config: formData.footer_config,
+          voice_config: formData.voice_config,
+          animation_config: formData.animation_config,
+          responsive_config: formData.responsive_config,
         })
         .eq('id', chatbotId)
         .eq('user_id', user.id);
@@ -313,7 +455,10 @@ export default function EditChatbotPage() {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Configuration */}
+          <div className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
           <Card>
             <CardHeader>
@@ -761,6 +906,29 @@ export default function EditChatbotPage() {
             </CardContent>
           </Card>
 
+              {/* Design Customization */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Palette className="h-5 w-5" />
+                    <span>Design Customization</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Customize the appearance and behavior of your chatbot widget
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DesignPanel
+                    config={formData}
+                    onChange={setFormData}
+                    onPreview={() => setShowPreview(true)}
+                    voiceEnabled={formData.voice_enabled}
+                    availableVoices={voices}
+                    onVoicePreview={handleVoicePreview}
+                  />
+                </CardContent>
+              </Card>
+
           {/* Submit Button */}
           <div className="flex justify-end">
             <Button
@@ -773,6 +941,56 @@ export default function EditChatbotPage() {
             </Button>
           </div>
         </form>
+          </div>
+
+          {/* Right Column - Preview */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Live Preview</CardTitle>
+                <CardDescription>
+                  See how your chatbot will look and behave
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChatbotPreview
+                  chatbotId={chatbotId}
+                  config={formData}
+                  className="w-full"
+                />
+              </CardContent>
+            </Card>
+
+            {/* Configuration Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Configuration Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Layout:</span>
+                  <span className="font-medium">{formData.ui_layout === 'corner' ? 'Corner Widget' : 'Full Screen'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Theme:</span>
+                  <span className="font-medium">{formData.ui_theme === 'light' ? 'Light' : 'Dark'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Voice Enabled:</span>
+                  <span className="font-medium">{formData.voice_enabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Lead Capture:</span>
+                  <span className="font-medium">{formData.data_capture_enabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Auto Model Selection:</span>
+                  <span className="font-medium">{formData.auto_model_selection ? 'Yes' : 'No'}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
     </div>
   );
