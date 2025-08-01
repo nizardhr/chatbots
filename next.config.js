@@ -7,7 +7,7 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/embed/:path*.js',
+        source: '/api/embed/:path*',
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
@@ -19,7 +19,11 @@ const nextConfig = {
           },
           {
             key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type',
+            value: 'Content-Type, Authorization',
+          },
+          {
+            key: 'Content-Type',
+            value: 'text/javascript; charset=utf-8',
           },
         ],
       },

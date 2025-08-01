@@ -14,8 +14,8 @@
   status = 200
 
 [[redirects]]
-  from = "/embed/*.js"
-  to = "/api/embed/:splat"
+  from = "/embed/:id.js"
+  to = "/api/embed/:id"
   status = 200
 
 [[redirects]]

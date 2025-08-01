@@ -3,10 +3,9 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await params;
-  const chatbotId = id.replace('.js', ''); // Remove .js extension if present
+  const chatbotId = params.id;
   
   // Add CORS headers
   const corsHeaders = {
@@ -276,7 +275,7 @@ export async function GET(
     return new NextResponse(embedScript, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'application/javascript; charset=utf-8',
+        'Content-Type': 'text/javascript; charset=utf-8',
         'Cache-Control': 'public, max-age=3600',
       },
     });
