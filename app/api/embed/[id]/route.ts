@@ -276,7 +276,7 @@ export async function GET(
     return new NextResponse(embedScript, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'text/javascript',
+        'Content-Type': 'application/javascript; charset=utf-8',
         'Cache-Control': 'public, max-age=3600',
       },
     });
