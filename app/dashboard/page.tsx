@@ -15,10 +15,23 @@ import { Plus, MoreVertical, Bot, Mic, Mail, AlertTriangle, Calendar, LogOut, Us
 interface Chatbot {
   id: string;
   name: string;
+  owner_name?: string;
+  bot_avatar_url?: string;
+  starting_phrase?: string;
   model: string;
+  auto_model_selection?: boolean;
+  fallback_models?: string[];
+  available_models?: any;
   voice_enabled: boolean;
+  elevenlabs_api_key?: string;
+  voice_id?: string;
+  voice_settings?: any;
   data_capture_enabled: boolean;
   last_payment_date: string;
+  ui_theme?: string;
+  ui_layout?: string;
+  footer_branding?: boolean;
+  theme_settings?: any;
   created_at: string;
   updated_at: string;
   monthly_tokens?: number;
