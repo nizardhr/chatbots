@@ -414,11 +414,24 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
     console.log('Public query result:', publicData);
     console.log('Public query error:', publicError);
     console.error('Embed script error:', error);
+    
+    // Try one more query with explicit anon access
+    console.log('Attempting explicit anon query...');
+    const { data: anonData, error: anonError } = await supabase
+      .from('chatbots')
+      .select('id, name, user_id')
+      .eq('id', chatbotId);
+    
+    console.log('Anon query result:', anonData);
+    console.log('Anon query error:', anonError);
+    
     const errorScript = `
 console.error('Embed script error:', ${JSON.stringify(error instanceof Error ? error.message : String(error))});
 console.log('Raw requested ID: ${params.id}');
 console.log('Cleaned chatbot ID: ${chatbotId}');
 console.log('Full error object:', ${JSON.stringify(error instanceof Error ? error : { error: String(error) })});
+console.log('Anon query result:', ${JSON.stringify(anonData)});
+console.log('Anon query error:', ${JSON.stringify(anonError)});
 `;
     return new NextResponse(errorScript, { 
       status: 200, // Return 200 so the script loads
