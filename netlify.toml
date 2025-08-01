@@ -8,16 +8,20 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# Redirect embed scripts to API routes
+[[redirects]]
+  from = "/embed/:id.js"
+  to = "/api/embed/:id"
+  status = 200
+  force = true
+
+# API routes
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-[[redirects]]
-  from = "/embed/:id.js"
-  to = "/api/embed/:id"
-  status = 200
-
+# Catch-all for SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
