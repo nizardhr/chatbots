@@ -505,28 +505,6 @@ export default function EditChatbotPage() {
             </CardContent>
           </Card>
 
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.last_payment_date ? (
-                        format(formData.last_payment_date, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={formData.last_payment_date}
-                      onSelect={(date) => date && handleInputChange('last_payment_date', date)}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Knowledge Base Upload */}
           <Card>
             <CardHeader>
