@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Upload, ArrowLeft, Bot, Mic, Database, Palette, Save, User, Image, MessageSquare, Sparkles } from 'lucide-react';
+import { FileUpload } from '@/components/ui/file-upload';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -348,16 +349,14 @@ export default function EditChatbotPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="bot_avatar_url">Bot Avatar URL</Label>
-                <Input
-                  id="bot_avatar_url"
-                  type="url"
-                  value={formData.bot_avatar_url}
-                  onChange={(e) => handleInputChange('bot_avatar_url', e.target.value)}
-                  placeholder="https://example.com/avatar.png"
-                />
-              </div>
+              <FileUpload
+                label="Bot Avatar"
+                description="Upload an avatar image for your chatbot"
+                currentUrl={formData.bot_avatar_url}
+                userId={user?.id || ''}
+                onUpload={(url) => handleInputChange('bot_avatar_url', url)}
+                maxSize={5}
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="starting_phrase">Starting Phrase</Label>
