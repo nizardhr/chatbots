@@ -405,10 +405,10 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
   } catch (error) {
     console.error('Embed script error:', error);
     const errorScript = `
-console.error('Embed script error:', ${JSON.stringify(error.message)});
+console.error('Embed script error:', ${JSON.stringify(error instanceof Error ? error.message : String(error))});
 console.log('Raw requested ID: ${params.id}');
 console.log('Cleaned chatbot ID: ${chatbotId}');
-console.log('Full error object:', ${JSON.stringify(error, Object.getOwnPropertyNames(error))});
+console.log('Full error object:', ${JSON.stringify(error instanceof Error ? error : { error: String(error) })});
 `;
     return new NextResponse(errorScript, { 
       status: 200, // Return 200 so the script loads
