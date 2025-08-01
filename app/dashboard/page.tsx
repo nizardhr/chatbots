@@ -120,32 +120,8 @@ export default function DashboardPage() {
 
   const handleGetEmbedCode = (chatbotId: string) => {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-    const embedCode = `<script>
-  // Chatbot Embed Script
-  (function() {
-    if (document.getElementById('chatbot-script-${chatbotId}')) {
-      console.log('Chatbot script already loaded');
-      return;
-    }
-    
-    var script = document.createElement('script');
-    script.id = 'chatbot-script-${chatbotId}';
-    script.src = '${siteUrl}/embed/${chatbotId}.js';
-    script.async = true;
-    script.crossOrigin = 'anonymous';
-    
-    script.onload = function() {
-      console.log('Chatbot script loaded successfully');
-    };
-    
-    script.onerror = function() {
-      console.error('Failed to load chatbot script from:', script.src);
-      console.error('Please check if the URL is accessible and CORS is properly configured');
-    };
-    
-    document.head.appendChild(script);
-  })();
-</script>`;
+    const embedCode = `<!-- Chatbot Embed Code -->
+<script src="${siteUrl}/embed/${chatbotId}.js" async crossorigin="anonymous"></script>`;
 
     navigator.clipboard.writeText(embedCode).then(() => {
       alert('Embed code copied to clipboard!');

@@ -11,7 +11,7 @@
 # Redirect embed scripts to API routes
 [[redirects]]
   from = "/embed/:id.js"
-  to = "/api/embed/:id"
+  to = "/embed/:id"
   status = 200
   force = true
 
