@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth';
-import { getOpenRouterModels } from '@/lib/openrouter';
+import { getAvailableModels } from '@/lib/openrouter-advanced';
+import { MODEL_PROVIDERS, getAllModels } from '@/lib/models';
 import { getElevenLabsVoices } from '@/lib/elevenlabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Upload, ArrowLeft, Bot, Mic, Database, Palette, Save } from 'lucide-react';
+import { CalendarIcon, Upload, ArrowLeft, Bot, Mic, Database, Palette, Save, User, Image, MessageSquare, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -50,9 +51,14 @@ export default function EditChatbotPage() {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
+    owner_name: '',
+    bot_avatar_url: '',
+    starting_phrase: 'Hi there! How can I help you today?',
     prompt: '',
     openrouter_api_key: '',
     model: 'meta-llama/llama-3.1-8b-instruct:free',
+    auto_model_selection: false,
+    fallback_models: ['gpt-3.5-turbo', 'claude-3.5-haiku'],
     voice_enabled: false,
     elevenlabs_api_key: '',
     voice_id: '',
@@ -63,6 +69,9 @@ export default function EditChatbotPage() {
     },
     data_capture_enabled: false,
     last_payment_date: new Date(),
+    ui_theme: 'light' as 'light' | 'dark',
+    ui_layout: 'corner' as 'corner' | 'full',
+    footer_branding: true,
     theme_settings: {
       primaryColor: '#000000',
       secondaryColor: '#ffffff',
@@ -100,9 +109,14 @@ export default function EditChatbotPage() {
 
     setFormData({
       name: data.name,
+      owner_name: data.owner_name || '',
+      bot_avatar_url: data.bot_avatar_url || '',
+      starting_phrase: data.starting_phrase || 'Hi there! How can I help you today?',
       prompt: data.prompt || '',
       openrouter_api_key: data.openrouter_api_key || '',
       model: data.model,
+      auto_model_selection: data.auto_model_selection || false,
+      fallback_models: data.fallback_models || ['gpt-3.5-turbo', 'claude-3.5-haiku'],
       voice_enabled: data.voice_enabled,
       elevenlabs_api_key: data.elevenlabs_api_key || '',
       voice_id: data.voice_id || '',
@@ -113,6 +127,9 @@ export default function EditChatbotPage() {
       },
       data_capture_enabled: data.data_capture_enabled,
       last_payment_date: new Date(data.last_payment_date),
+      ui_theme: data.ui_theme || 'light',
+      ui_layout: data.ui_layout || 'corner',
+      footer_branding: data.footer_branding !== false,
       theme_settings: data.theme_settings || {
         primaryColor: '#000000',
         secondaryColor: '#ffffff',
@@ -124,7 +141,7 @@ export default function EditChatbotPage() {
 
     // Load models and voices if API keys are present
     if (data.openrouter_api_key) {
-      loadModels(data.openrouter_api_key);
+      loadModels();
     }
     if (data.elevenlabs_api_key) {
       loadVoices(data.elevenlabs_api_key);
@@ -148,12 +165,12 @@ export default function EditChatbotPage() {
     }));
   };
 
-  const loadModels = async (apiKey?: string) => {
-    const key = apiKey || formData.openrouter_api_key;
+  const loadModels = async () => {
+    const key = formData.openrouter_api_key;
     if (!key) return;
     
     try {
-      const fetchedModels = await getOpenRouterModels(key);
+      const fetchedModels = await getAvailableModels(key);
       setModels(fetchedModels);
     } catch (error) {
       console.error('Failed to load models:', error);
@@ -221,15 +238,23 @@ export default function EditChatbotPage() {
         .from('chatbots')
         .update({
           name: formData.name,
+          owner_name: formData.owner_name,
+          bot_avatar_url: formData.bot_avatar_url,
+          starting_phrase: formData.starting_phrase,
           prompt: formData.prompt,
           openrouter_api_key: formData.openrouter_api_key,
           model: formData.model,
+          auto_model_selection: formData.auto_model_selection,
+          fallback_models: formData.fallback_models,
           voice_enabled: formData.voice_enabled,
           elevenlabs_api_key: formData.elevenlabs_api_key,
           voice_id: formData.voice_id,
           voice_settings: formData.voice_settings,
           data_capture_enabled: formData.data_capture_enabled,
           last_payment_date: format(formData.last_payment_date, 'yyyy-MM-dd'),
+          ui_theme: formData.ui_theme,
+          ui_layout: formData.ui_layout,
+          footer_branding: formData.footer_branding,
           theme_settings: formData.theme_settings,
           updated_at: new Date().toISOString(),
         })
@@ -293,26 +318,59 @@ export default function EditChatbotPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Bot className="h-5 w-5" />
-                <span>Basic Information</span>
+                <span>Chatbot Identity</span>
               </CardTitle>
               <CardDescription>
-                Configure your chatbot's core settings and AI model
+                Configure your chatbot's identity and personality
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Chatbot Name *</Label>
+                  <Input
+                    id="name"
+                    required
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="e.g., Customer Support Bot"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="owner_name">Owner Name</Label>
+                  <Input
+                    id="owner_name"
+                    value={formData.owner_name}
+                    onChange={(e) => handleInputChange('owner_name', e.target.value)}
+                    placeholder="Your name or company"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="name">Chatbot Name *</Label>
+                <Label htmlFor="bot_avatar_url">Bot Avatar URL</Label>
                 <Input
-                  id="name"
-                  required
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Enter a name for your chatbot"
+                  id="bot_avatar_url"
+                  type="url"
+                  value={formData.bot_avatar_url}
+                  onChange={(e) => handleInputChange('bot_avatar_url', e.target.value)}
+                  placeholder="https://example.com/avatar.png"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="prompt">Prompt & Instructions</Label>
+                <Label htmlFor="starting_phrase">Starting Phrase</Label>
+                <Input
+                  id="starting_phrase"
+                  value={formData.starting_phrase}
+                  onChange={(e) => handleInputChange('starting_phrase', e.target.value)}
+                  placeholder="Hi there! How can I help you today?"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="prompt">System Prompt & Instructions</Label>
                 <Textarea
                   id="prompt"
                   value={formData.prompt}
@@ -321,6 +379,21 @@ export default function EditChatbotPage() {
                   rows={4}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Model Configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Sparkles className="h-5 w-5" />
+                <span>AI Model Configuration</span>
+              </CardTitle>
+              <CardDescription>
+                Configure AI models and intelligent routing
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
 
               <div className="space-y-2">
                 <Label htmlFor="openrouter_api_key">OpenRouter API Key *</Label>
@@ -335,26 +408,69 @@ export default function EditChatbotPage() {
                 />
               </div>
 
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="auto_model_selection"
+                  checked={formData.auto_model_selection}
+                  onCheckedChange={(checked) => handleInputChange('auto_model_selection', checked)}
+                />
+                <Label htmlFor="auto_model_selection">Enable Intelligent Model Selection</Label>
+              </div>
+
+              {!formData.auto_model_selection && (
+                <div className="space-y-2">
+                  <Label htmlFor="model">Default AI Model</Label>
+                  <Select
+                    value={formData.model}
+                    onValueChange={(value) => handleInputChange('model', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MODEL_PROVIDERS.map((provider) => (
+                        <div key={provider.id}>
+                          <div className="px-2 py-1 text-sm font-semibold text-gray-500 bg-gray-100">
+                            {provider.name}
+                          </div>
+                          {provider.models.map((model) => (
+                            <SelectItem key={model.id} value={model.id}>
+                              <div className="flex flex-col">
+                                <span>{model.name}</span>
+                                <span className="text-xs text-gray-500">{model.description}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label htmlFor="model">AI Model</Label>
-                <Select
-                  value={formData.model}
-                  onValueChange={(value) => handleInputChange('model', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="meta-llama/llama-3.1-8b-instruct:free">
-                      Llama 3.1 8B (Free)
-                    </SelectItem>
-                    {models.map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
+                <Label>Fallback Models</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {getAllModels().slice(0, 6).map((model) => (
+                    <div key={model.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`fallback-${model.id}`}
+                        checked={formData.fallback_models.includes(model.id)}
+                        onChange={(e) => {
+                          const newFallbacks = e.target.checked
+                            ? [...formData.fallback_models, model.id]
+                            : formData.fallback_models.filter(m => m !== model.id);
+                          handleInputChange('fallback_models', newFallbacks);
+                        }}
+                        className="rounded"
+                      />
+                      <Label htmlFor={`fallback-${model.id}`} className="text-sm">
                         {model.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -367,6 +483,28 @@ export default function EditChatbotPage() {
                         "w-full justify-start text-left font-normal",
                         !formData.last_payment_date && "text-muted-foreground"
                       )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.last_payment_date ? (
+                        format(formData.last_payment_date, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={formData.last_payment_date}
+                      onSelect={(date) => date && handleInputChange('last_payment_date', date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </CardContent>
+          </Card>
+
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {formData.last_payment_date ? (
@@ -584,14 +722,46 @@ export default function EditChatbotPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Palette className="h-5 w-5" />
-                <span>Theme & Appearance</span>
+                <span>UI Theme & Layout</span>
               </CardTitle>
               <CardDescription>
-                Customize how your chatbot looks when embedded
+                Customize how your chatbot looks and behaves when embedded
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="ui_theme">Theme</Label>
+                  <Select
+                    value={formData.ui_theme}
+                    onValueChange={(value: 'light' | 'dark') => handleInputChange('ui_theme', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light Theme</SelectItem>
+                      <SelectItem value="dark">Dark Theme</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ui_layout">Layout Style</Label>
+                  <Select
+                    value={formData.ui_layout}
+                    onValueChange={(value: 'corner' | 'full') => handleInputChange('ui_layout', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="corner">Corner Widget</SelectItem>
+                      <SelectItem value="full">Full Page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="primaryColor">Primary Color</Label>
                   <Input
@@ -601,26 +771,15 @@ export default function EditChatbotPage() {
                     onChange={(e) => handleNestedInputChange('theme_settings', 'primaryColor', e.target.value)}
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="secondaryColor">Secondary Color</Label>
-                  <Input
-                    id="secondaryColor"
-                    type="color"
-                    value={formData.theme_settings.secondaryColor}
-                    onChange={(e) => handleNestedInputChange('theme_settings', 'secondaryColor', e.target.value)}
-                  />
-                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="welcomeMessage">Welcome Message</Label>
-                <Input
-                  id="welcomeMessage"
-                  value={formData.theme_settings.welcomeMessage}
-                  onChange={(e) => handleNestedInputChange('theme_settings', 'welcomeMessage', e.target.value)}
-                  placeholder="Hi! How can I help you today?"
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="footer_branding"
+                  checked={formData.footer_branding}
+                  onCheckedChange={(checked) => handleInputChange('footer_branding', checked)}
                 />
+                <Label htmlFor="footer_branding">Show "Powered by Yvexan Agency" footer</Label>
               </div>
             </CardContent>
           </Card>

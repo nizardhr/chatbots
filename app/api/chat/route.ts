@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { chatWithOpenRouter } from '@/lib/openrouter';
+import { chatWithAdvancedRouting } from '@/lib/openrouter-advanced';
 import { generateSpeech } from '@/lib/elevenlabs';
 
 export async function POST(request: NextRequest) {
@@ -36,14 +36,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Get response from OpenRouter
-    const chatResponse = await chatWithOpenRouter(
+    const chatResponse = await chatWithAdvancedRouting(
       chatbot.openrouter_api_key,
-      chatbot.model,
-      messages
+      messages,
+      {
+        preferredModel: chatbot.model,
+        autoModelSelection: chatbot.auto_model_selection,
+        fallbackModels: chatbot.fallback_models || ['gpt-3.5-turbo', 'claude-3.5-haiku'],
+        temperature: 0.7,
+        maxTokens: 2000
+      }
     );
 
-    const aiMessage = chatResponse.choices[0].message.content;
-    const tokensUsed = chatResponse.usage?.total_tokens || 0;
+    const aiMessage = chatResponse.message;
+    const tokensUsed = chatResponse.tokensUsed;
+    const modelUsed = chatResponse.model;
+    const estimatedCost = chatResponse.cost;
 
     // Log usage
     const { error: usageError } = await supabase
@@ -52,9 +60,9 @@ export async function POST(request: NextRequest) {
         chatbot_id: chatbotId,
         user_id: chatbot.user_id,
         tokens_used: tokensUsed,
-        model_used: chatbot.model,
+        model_used: modelUsed,
         request_type: 'chat',
-        cost_estimate: tokensUsed * 0.000001, // Rough estimate
+        cost_estimate: estimatedCost,
       });
 
     if (usageError) {

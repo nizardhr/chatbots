@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth';
-import { getOpenRouterModels } from '@/lib/openrouter';
+import { getAvailableModels } from '@/lib/openrouter-advanced';
+import { MODEL_PROVIDERS, getAllModels } from '@/lib/models';
 import { getElevenLabsVoices } from '@/lib/elevenlabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Upload, ArrowLeft, Bot, Mic, Database, Palette, Save } from 'lucide-react';
+import { CalendarIcon, Upload, ArrowLeft, Bot, Mic, Database, Palette, Save, User, Image, MessageSquare, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -47,9 +48,14 @@ export default function CreateChatbotPage() {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
+    owner_name: '',
+    bot_avatar_url: '',
+    starting_phrase: 'Hi there! How can I help you today?',
     prompt: '',
     openrouter_api_key: '',
     model: 'meta-llama/llama-3.1-8b-instruct:free',
+    auto_model_selection: false,
+    fallback_models: ['gpt-3.5-turbo', 'claude-3.5-haiku'],
     voice_enabled: false,
     elevenlabs_api_key: '',
     voice_id: '',
@@ -60,11 +66,15 @@ export default function CreateChatbotPage() {
     },
     data_capture_enabled: false,
     last_payment_date: new Date(),
+    ui_theme: 'light' as 'light' | 'dark',
+    ui_layout: 'corner' as 'corner' | 'full',
+    footer_branding: true,
     theme_settings: {
       primaryColor: '#000000',
       secondaryColor: '#ffffff',
       welcomeMessage: 'Hi! How can I help you today?',
     },
+    available_models: MODEL_PROVIDERS.reduce((acc, provider) => ({ ...acc, [provider.id]: provider.models.map(m => m.id) }), {}),
   });
 
   useEffect(() => {
@@ -101,7 +111,7 @@ export default function CreateChatbotPage() {
     if (!formData.openrouter_api_key) return;
     
     try {
-      const fetchedModels = await getOpenRouterModels(formData.openrouter_api_key);
+      const fetchedModels = await getAvailableModels(formData.openrouter_api_key);
       setModels(fetchedModels);
     } catch (error) {
       console.error('Failed to load models:', error);
@@ -169,16 +179,25 @@ export default function CreateChatbotPage() {
         .insert({
           user_id: user.id,
           name: formData.name,
+          owner_name: formData.owner_name,
+          bot_avatar_url: formData.bot_avatar_url,
+          starting_phrase: formData.starting_phrase,
           prompt: formData.prompt,
           openrouter_api_key: formData.openrouter_api_key,
           model: formData.model,
+          auto_model_selection: formData.auto_model_selection,
+          fallback_models: formData.fallback_models,
           voice_enabled: formData.voice_enabled,
           elevenlabs_api_key: formData.elevenlabs_api_key,
           voice_id: formData.voice_id,
           voice_settings: formData.voice_settings,
           data_capture_enabled: formData.data_capture_enabled,
           last_payment_date: format(formData.last_payment_date, 'yyyy-MM-dd'),
+          ui_theme: formData.ui_theme,
+          ui_layout: formData.ui_layout,
+          footer_branding: formData.footer_branding,
           theme_settings: formData.theme_settings,
+          available_models: formData.available_models,
         })
         .select()
         .single();

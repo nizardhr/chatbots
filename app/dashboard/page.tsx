@@ -128,26 +128,22 @@ export default function DashboardPage() {
     console.log('Generating embed code for chatbot:', chatbotId);
     console.log('Site URL:', siteUrl);
     
-    const embedCode = `<!-- Chatbot Embed Code -->
+    // Find the chatbot to get its layout
+    const chatbot = chatbots.find(c => c.id === chatbotId);
+    const layout = chatbot?.ui_layout || 'corner';
+    
+    const embedCode = `<!-- ${chatbot?.name || 'Chatbot'} Embed Code -->
 <script>
-  console.log('Loading chatbot embed script for ID: ${chatbotId}');
-  console.log('Full embed URL: ${siteUrl}/embed/${chatbotId}.js');
   const script = document.createElement('script');
   script.src = '${siteUrl}/embed/${chatbotId}.js';
+  script.setAttribute('data-layout', '${layout}');
   script.async = true;
   script.crossOrigin = 'anonymous';
-  script.onload = function() {
-    console.log('Chatbot embed script loaded successfully');
-  };
-  script.onerror = function(error) {
-    console.error('Failed to load chatbot embed script:', error);
-    console.log('Script URL:', script.src);
-  };
   document.head.appendChild(script);
 </script>`;
 
     navigator.clipboard.writeText(embedCode).then(() => {
-      alert('Embed code copied to clipboard!');
+      alert(`Embed code copied to clipboard!\n\nLayout: ${layout === 'corner' ? 'Corner Widget' : 'Full Page'}`);
     });
   };
 
