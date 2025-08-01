@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { chatWithAdvancedRouting } from '@/lib/openrouter-advanced';
+import { chatWithAdvancedRouting, ChatMessage } from '@/lib/openrouter-advanced';
 import { generateSpeech } from '@/lib/elevenlabs';
 
 export async function POST(request: NextRequest) {
