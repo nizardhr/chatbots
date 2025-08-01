@@ -7,6 +7,8 @@ export async function GET(
 ) {
   const chatbotId = params.id;
   
+  console.log('Embed script requested for chatbot ID:', chatbotId);
+  
   // Add CORS headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -24,11 +26,14 @@ export async function GET(
       .single();
 
     if (error || !chatbot) {
+      console.log('Chatbot not found:', error);
       return new NextResponse('Chatbot not found', { 
         status: 404,
         headers: corsHeaders
       });
     }
+
+    console.log('Chatbot found:', chatbot.name);
 
     // Check payment status
     const lastPayment = new Date(chatbot.last_payment_date);

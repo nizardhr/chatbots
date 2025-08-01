@@ -119,11 +119,15 @@ export default function DashboardPage() {
   };
 
   const handleGetEmbedCode = (chatbotId: string) => {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
     const embedCode = `<script>
   (function() {
     var script = document.createElement('script');
-    script.src = '${window.location.origin}/embed/${chatbotId}.js';
+    script.src = '${siteUrl}/embed/${chatbotId}.js';
     script.async = true;
+    script.onerror = function() {
+      console.error('Failed to load chatbot script from:', script.src);
+    };
     document.head.appendChild(script);
   })();
 </script>`;
