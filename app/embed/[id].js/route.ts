@@ -23,7 +23,10 @@ export async function GET(
       .single();
 
     if (error || !chatbot) {
-      return new NextResponse('Chatbot not found', { status: 404 });
+      return new NextResponse('Chatbot not found', { 
+        status: 404,
+        headers: corsHeaders
+      });
     }
 
     // Check payment status
