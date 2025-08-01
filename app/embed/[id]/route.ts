@@ -7,7 +7,9 @@ export async function GET(
 ) {
   const chatbotId = params.id;
   
-  console.log('Embed script requested for chatbot ID:', chatbotId);
+  console.log('=== EMBED SCRIPT DEBUG ===');
+  console.log('Requested chatbot ID:', chatbotId);
+  console.log('Request URL:', request.url);
   
   // CORS headers
   const corsHeaders = {
@@ -18,17 +20,37 @@ export async function GET(
   };
 
   try {
-    // Get chatbot configuration
+    // First, let's check if we can connect to Supabase
+    console.log('Attempting to connect to Supabase...');
+    
+    // Get all chatbots to debug
+    const { data: allChatbots, error: allError } = await supabase
+      .from('chatbots')
+      .select('id, name, user_id');
+    
+    console.log('All chatbots in database:', allChatbots);
+    console.log('Database connection error (if any):', allError);
+    
+    // Get specific chatbot
     const { data: chatbot, error } = await supabase
       .from('chatbots')
       .select('*')
       .eq('id', chatbotId)
       .single();
 
+    console.log('Specific chatbot query result:', chatbot);
+    console.log('Specific chatbot query error:', error);
+
     if (error || !chatbot) {
-      console.log('Chatbot not found:', error);
-      return new NextResponse('console.error("Chatbot not found");', { 
-        status: 404,
+      console.log('Chatbot not found, returning error script');
+      const errorScript = `
+console.error("Chatbot not found");
+console.log("Requested ID: ${chatbotId}");
+console.log("Available chatbots:", ${JSON.stringify(allChatbots?.map(c => ({ id: c.id, name: c.name })) || [])});
+`;
+      
+      return new NextResponse(errorScript, { 
+        status: 200, // Return 200 so the script loads
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/javascript; charset=utf-8',
@@ -48,7 +70,10 @@ export async function GET(
 
     const embedScript = `
 (function() {
-  console.log('Loading chatbot widget for ID: ${chatbotId}');
+  console.log('=== CHATBOT WIDGET LOADING ===');
+  console.log('Chatbot ID: ${chatbotId}');
+  console.log('Chatbot Name: ${chatbot.name}');
+  console.log('Site URL: ${siteUrl}');
   
   // Prevent multiple instances
   if (window.chatbotWidget_${chatbotId.replace(/-/g, '_')}) {
@@ -67,9 +92,11 @@ export async function GET(
     apiUrl: '${siteUrl}'
   };
 
+  console.log('Chatbot config:', config);
+
   // Create chatbot widget
   function createChatWidget() {
-    console.log('Creating chat widget');
+    console.log('Creating chat widget...');
     
     try {
       // Create container
@@ -131,7 +158,7 @@ export async function GET(
       \`;
       
       chatHeader.innerHTML = \`
-        <span>Chat Assistant</span>
+        <span>${chatbot.name}</span>
         \${config.paymentOverdue ? '<span style="background: #ff6b6b; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Payment Due</span>' : ''}
       \`;
 
@@ -191,12 +218,15 @@ export async function GET(
       // Add to page
       document.body.appendChild(container);
 
+      console.log('Chat widget created successfully');
+
       // Event handlers
       let isOpen = false;
       chatButton.addEventListener('click', function() {
         isOpen = !isOpen;
         chatWindow.style.display = isOpen ? 'flex' : 'none';
         chatButton.innerHTML = isOpen ? '✕' : '💬';
+        console.log('Chat window toggled:', isOpen ? 'opened' : 'closed');
       });
 
       chatButton.addEventListener('mouseenter', function() {
@@ -265,12 +295,15 @@ export async function GET(
           })
         })
         .then(response => {
+          console.log('Chat API response status:', response.status);
           if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error('Network response was not ok: ' + response.status);
           }
           return response.json();
         })
         .then(data => {
+          console.log('Chat API response data:', data);
+          
           // Remove typing indicator
           if (typingMsg.parentNode) {
             chatMessages.removeChild(typingMsg);
@@ -325,7 +358,6 @@ export async function GET(
         });
       }
 
-      console.log('Chatbot widget created successfully');
     } catch (error) {
       console.error('Error creating chatbot widget:', error);
     }
@@ -342,6 +374,8 @@ export async function GET(
 })();
 `;
 
+    console.log('Returning embed script for chatbot:', chatbot.name);
+
     return new NextResponse(embedScript, {
       headers: {
         ...corsHeaders,
@@ -352,8 +386,12 @@ export async function GET(
 
   } catch (error) {
     console.error('Embed script error:', error);
-    return new NextResponse(`console.error('Embed script error: ${error}');`, { 
-      status: 500,
+    const errorScript = `
+console.error('Embed script error: ${error}');
+console.log('Requested chatbot ID: ${chatbotId}');
+`;
+    return new NextResponse(errorScript, { 
+      status: 200, // Return 200 so the script loads
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/javascript; charset=utf-8',

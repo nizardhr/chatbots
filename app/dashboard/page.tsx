@@ -119,9 +119,23 @@ export default function DashboardPage() {
   };
 
   const handleGetEmbedCode = (chatbotId: string) => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yvexanchatbots.netlify.app';
     const embedCode = `<!-- Chatbot Embed Code -->
-<script src="${siteUrl}/embed/${chatbotId}.js" async crossorigin="anonymous"></script>`;
+<script>
+  console.log('Loading chatbot embed script for ID: ${chatbotId}');
+  const script = document.createElement('script');
+  script.src = '${siteUrl}/embed/${chatbotId}.js';
+  script.async = true;
+  script.crossOrigin = 'anonymous';
+  script.onload = function() {
+    console.log('Chatbot embed script loaded successfully');
+  };
+  script.onerror = function(error) {
+    console.error('Failed to load chatbot embed script:', error);
+    console.log('Script URL:', script.src);
+  };
+  document.head.appendChild(script);
+</script>`;
 
     navigator.clipboard.writeText(embedCode).then(() => {
       alert('Embed code copied to clipboard!');
