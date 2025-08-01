@@ -3,15 +3,17 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const chatbotId = params.id;
+  const { id } = await params;
+  const chatbotId = id.replace('.js', ''); // Remove .js extension if present
   
   // Add CORS headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
   };
 
   try {
@@ -275,6 +277,7 @@ export async function GET(
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/javascript',
+        'Content-Type': 'text/javascript',
         'Cache-Control': 'public, max-age=3600',
       },
     });
@@ -295,6 +298,7 @@ export async function OPTIONS(request: NextRequest) {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400',
     },
   });
 }
