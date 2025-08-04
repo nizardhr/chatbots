@@ -6,11 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "export": "next build && next export"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
-    "@next/swc-wasm-nodejs": "13.5.1",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -69,8 +69,5 @@
     "vaul": "^0.9.9",
     "zod": "^3.23.8"
   },
-  "devDependencies": {
-    "bufferutil": "^4.0.9",
-    "utf-8-validate": "^6.0.5"
-  }
+  "devDependencies": {}
 }

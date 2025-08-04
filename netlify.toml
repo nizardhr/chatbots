@@ -3,29 +3,20 @@
   publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "18"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Redirect embed scripts to API routes
+# Handle embed scripts
 [[redirects]]
   from = "/embed/:id.js"
-  to = "/embed/:id"
+  to = "/api/embed/:id"
   status = 200
   force = true
 
-# API routes
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-# Catch-all for SPA
+# Handle all other routes for SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[functions]
-  directory = ".netlify/functions"

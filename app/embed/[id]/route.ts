@@ -8,15 +8,6 @@ export async function GET(
   // Remove .js extension if present
   const chatbotId = params.id.replace(/\.js$/, "");
 
-  console.log("=== EMBED SCRIPT DEBUG ===");
-  console.log("Requested chatbot ID:", chatbotId);
-  console.log("Request URL:", request.url);
-  console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log(
-    "Supabase Key exists:",
-    !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
-
   // CORS headers
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -26,27 +17,6 @@ export async function GET(
   };
 
   try {
-    // First, let's check if we can connect to Supabase
-    console.log("Attempting to connect to Supabase...");
-
-    // Test basic connection
-    const { data: testData, error: testError } = await supabase
-      .from("chatbots")
-      .select("count")
-      .limit(1);
-
-    console.log("Database test query result:", testData);
-    console.log("Database test error:", testError);
-
-    // Get all chatbots to debug
-    const { data: allChatbots, error: allError } = await supabase
-      .from("chatbots")
-      .select("id, name, user_id");
-
-    console.log("All chatbots in database:", allChatbots);
-    console.log("Database connection error (if any):", allError);
-    console.log("Number of chatbots found:", allChatbots?.length || 0);
-
     // Get specific chatbot
     const { data: chatbot, error } = await supabase
       .from("chatbots")
@@ -72,37 +42,20 @@ export async function GET(
       .eq("id", chatbotId)
       .single();
 
-    console.log("Specific chatbot query result:", chatbot);
-    console.log("Specific chatbot query error:", error);
-
     if (error || !chatbot) {
-      console.log("Chatbot not found, returning error script");
       const errorScript = `
 console.error("Chatbot not found: ${chatbotId}");
-console.log("Raw requested ID: ${params.id}");
-console.log("Cleaned chatbot ID: ${chatbotId}");
-console.log("Available chatbots:", ${JSON.stringify(
-        allChatbots?.map((c) => ({ id: c.id, name: c.name })) || []
-      )});
-console.log("Database error:", ${JSON.stringify(allError)});
-console.log("Specific chatbot error:", ${JSON.stringify(error)});
-console.log("Environment check - Supabase URL:", "${
-        process.env.NEXT_PUBLIC_SUPABASE_URL
-      }");
-console.log("Environment check - Has Supabase Key:", ${!!process.env
-        .NEXT_PUBLIC_SUPABASE_ANON_KEY});
+console.log("Please check the chatbot ID and try again.");
 `;
 
       return new NextResponse(errorScript, {
-        status: 200, // Return 200 so the script loads
+        status: 200,
         headers: {
           ...corsHeaders,
           "Content-Type": "application/javascript; charset=utf-8",
         },
       });
     }
-
-    console.log("Chatbot found:", chatbot.name);
 
     // Check payment status
     const lastPayment = new Date(chatbot.last_payment_date);
@@ -204,17 +157,8 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
 
     const embedScript = `
 (function() {
-  console.log('=== CHATBOT WIDGET LOADING ===');
-  console.log('Chatbot ID: ${chatbotId}');
-  console.log('Chatbot Name: ${chatbot.name}');
-  console.log('Owner: ${chatbot.owner_name || "Not specified"}');
-  console.log('Layout: ${designConfig.layout}');
-  console.log('Theme: ${designConfig.theme}');
-  console.log('Site URL: ${siteUrl}');
-  
   // Prevent multiple instances
   if (window.chatbotWidget_${chatbotId.replace(/-/g, "_")}) {
-    console.log('Chatbot widget already loaded');
     return;
   }
   window.chatbotWidget_${chatbotId.replace(/-/g, "_")} = true;
@@ -235,47 +179,13 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
     apiUrl: '${siteUrl}'
   };
 
-  console.log('Chatbot config:', config);
-
   // Create chatbot widget
   function createChatWidget() {
-    console.log('Creating chat widget...');
-    
     try {
-      // Get layout-specific styles
-      const isFullPage = config.design.layout === 'full';
-      const isDarkTheme = config.design.theme === 'dark';
-      
       const colors = config.design.colors;
       const typography = config.design.typography;
-      const responsive = config.design.responsive;
+      const isFullPage = config.design.layout === 'full';
       
-      // Determine current device type
-      const isMobile = window.innerWidth <= parseInt(responsive.breakpoints?.mobile || '768px');
-      const isTablet = window.innerWidth <= parseInt(responsive.breakpoints?.tablet || '1024px') && !isMobile;
-      
-      // Get responsive dimensions
-      const getResponsiveDimensions = () => {
-        if (isMobile) {
-          return {
-            width: responsive.mobileWidth,
-            height: responsive.mobileHeight
-          };
-        } else if (isTablet) {
-          return {
-            width: responsive.tabletWidth,
-            height: responsive.tabletHeight
-          };
-        } else {
-          return {
-            width: config.design.width,
-            height: config.design.height
-          };
-        }
-      };
-      
-      const dimensions = getResponsiveDimensions();
-
       // Create container
       const container = document.createElement('div');
       container.id = 'chatbot-widget-container-${chatbotId}';
@@ -348,8 +258,8 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
           position: absolute;
           bottom: 80px;
           right: 0;
-          width: \${dimensions.width};
-          height: \${dimensions.height};
+          width: \${config.design.width};
+          height: \${config.design.height};
           background: \${colors.background};
           border-radius: \${config.design.borderRadius};
           box-shadow: 0 8px 32px rgba(0,0,0,0.1);
@@ -361,8 +271,8 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
       }
 
       // Chat header (if enabled)
-      const chatHeader = document.createElement('div');
       if (config.design.header.showHeader) {
+        const chatHeader = document.createElement('div');
         chatHeader.style.cssText = \`
           background: \${colors.header};
           color: \${colors.background};
@@ -377,21 +287,17 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
         
         let headerContent = '';
         
-        // Add logo/avatar if enabled
         if (config.design.header.showLogo && config.avatarUrl) {
           headerContent += \`<img src="\${config.avatarUrl}" alt="Bot Avatar" style="width: \${config.design.header.logoSize}; height: \${config.design.header.logoSize}; border-radius: 50%; margin-right: 12px;">\`;
         }
         
-        // Add title
         const title = config.design.header.customTitle || config.name;
         headerContent += \`<span>\${title}</span>\`;
         
-        // Add owner name if enabled
         if (config.design.header.showOwnerName && config.ownerName) {
           headerContent += \`<small style="opacity: 0.8; font-size: 12px;">by \${config.ownerName}</small>\`;
         }
         
-        // Add payment status if overdue
         if (config.paymentOverdue) {
           headerContent += '<span style="background: #ff6b6b; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: auto;">Payment Due</span>';
         }
@@ -431,7 +337,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
         position: relative;
       \`;
       
-      // Add message tail if enabled
       if (config.design.bubbles.showTail) {
         welcomeMsg.style.cssText += \`
           &::after {
@@ -449,7 +354,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
         \`;
       }
       
-      // Add timestamp if enabled
       if (config.design.bubbles.showTimestamp) {
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         welcomeMsg.innerHTML = \`
@@ -488,7 +392,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
         font-family: \${typography.fontFamily};
       \`;
       
-      // Auto-focus if enabled
       if (config.design.input.autoFocus) {
         setTimeout(() => chatInput.focus(), 100);
       }
@@ -500,7 +403,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
         const sendButton = document.createElement('button');
         sendButton.innerHTML = '→';
         
-        // Apply button style based on configuration
         const buttonStyle = config.design.input.buttonStyle;
         const buttonSize = config.design.input.buttonSize;
         const borderRadius = buttonStyle === 'rounded' ? '50%' : 
@@ -571,8 +473,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
       // Add to page
       document.body.appendChild(container);
 
-      console.log('Chat widget created successfully');
-
       // Event handlers for corner layout
       if (!isFullPage) {
         const chatButton = container.querySelector('#chatbot-toggle-btn-${chatbotId}');
@@ -588,7 +488,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
           } else {
             chatButton.innerHTML = isOpen ? '✕' : '💬';
           }
-          console.log('Chat window toggled:', isOpen ? 'opened' : 'closed');
         });
 
         chatButton.addEventListener('mouseenter', function() {
@@ -612,8 +511,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
       });
 
       function sendMessage(message) {
-        console.log('Sending message:', message);
-        
         // Add user message
         const userMsg = document.createElement('div');
         const userBubbleShadow = config.design.bubbles.shadow === 'none' ? 'none' : 
@@ -638,7 +535,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
           box-shadow: \${userBubbleShadow};
         \`;
         
-        // Add message tail if enabled
         if (config.design.bubbles.showTail) {
           userMsg.style.cssText += \`
             &::after {
@@ -656,7 +552,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
           \`;
         }
         
-        // Add timestamp if enabled
         if (config.design.bubbles.showTimestamp) {
           const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           userMsg.innerHTML = \`
@@ -706,17 +601,14 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
           })
         })
         .then(response => {
-          console.log('Chat API response status:', response.status);
           if (!response.ok) {
             throw new Error('Network response was not ok: ' + response.status);
           }
           return response.json();
         })
         .then(data => {
-          console.log('Chat API response data:', data);
-          
           // Remove typing indicator
-          if (typingMsg.parentNode) {
+          if (typingMsg && typingMsg.parentNode) {
             chatMessages.removeChild(typingMsg);
           }
           
@@ -742,7 +634,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
             position: relative;
           \`;
           
-          // Add message tail if enabled
           if (config.design.bubbles.showTail) {
             botMsg.style.cssText += \`
               &::after {
@@ -760,7 +651,6 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
             \`;
           }
           
-          // Add timestamp if enabled
           if (config.design.bubbles.showTimestamp) {
             const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             botMsg.innerHTML = \`
@@ -790,7 +680,7 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
         .catch(error => {
           console.error('Chat error:', error);
           // Remove typing indicator
-          if (typingMsg.parentNode) {
+          if (typingMsg && typingMsg.parentNode) {
             chatMessages.removeChild(typingMsg);
           }
           
@@ -853,12 +743,8 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
   } else {
     createChatWidget();
   }
-  
-  console.log('Chatbot widget script loaded successfully');
 })();
 `;
-
-    console.log("Returning embed script for chatbot:", chatbot.name);
 
     return new NextResponse(embedScript, {
       headers: {
@@ -874,16 +760,10 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env
 console.error('Embed script error:', ${JSON.stringify(
       error instanceof Error ? error.message : String(error)
     )});
-console.log('Raw requested ID: ${params.id}');
-console.log('Cleaned chatbot ID: ${chatbotId}');
-console.log('Full error object:', ${JSON.stringify(
-      error instanceof Error
-        ? { message: error.message, stack: error.stack }
-        : { error: String(error) }
-    )});
+console.log('Please check the chatbot configuration and try again.');
 `;
     return new NextResponse(errorScript, {
-      status: 200, // Return 200 so the script loads
+      status: 200,
       headers: {
         ...corsHeaders,
         "Content-Type": "application/javascript; charset=utf-8",
