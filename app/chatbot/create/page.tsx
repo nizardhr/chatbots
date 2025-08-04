@@ -26,7 +26,6 @@ import { ChatbotPreview } from '@/components/ui/chatbot-preview';
 import { DesignShowcase } from '@/components/ui/design-showcase';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChatbotEditorLayout } from '@/components/ui/chatbot-editor-layout';
 
 interface OpenRouterModel {
   id: string;
@@ -43,14 +42,7 @@ interface ElevenLabsVoice {
   category: string;
 }
 
-const sidebarNavItems = [
-    { title: 'Identity', href: '#identity', icon: Bot },
-    { title: 'AI Model', href: '#model', icon: Sparkles },
-    { title: 'Knowledge', href: '#knowledge', icon: Database },
-    { title: 'Voice', href: '#voice', icon: Mic },
-    { title: 'Lead Capture', href: '#leads', icon: User },
-    { title: 'Design', href: '#design', icon: Paintbrush },
-];
+
 
 export default function CreateChatbotPage() {
   const [user, setUser] = useState<any>(null);
@@ -407,9 +399,11 @@ export default function CreateChatbotPage() {
       </header>
 
       {/* Main Content */}
-      <main>
-        <ChatbotEditorLayout sidebarNavItems={sidebarNavItems}>
-          <form id="chatbot-form" onSubmit={handleSubmit} className="space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Left Column - Main Configuration */}
+          <div className="xl:col-span-2 space-y-8">
+            <form id="chatbot-form" onSubmit={handleSubmit} className="space-y-8">
               
             <div id="identity" className="space-y-8">
               <h3 className="text-lg font-medium">Identity & Personality</h3>
@@ -744,8 +738,82 @@ export default function CreateChatbotPage() {
               </Card>
             </div>
           </form>
-        </ChatbotEditorLayout>
-      </main>
-    </div>
-  );
+        </div>
+
+        {/* Right Column - Preview & Summary */}
+        <div className="space-y-6">
+          {/* Design Presets */}
+          <Card className="shadow-sm border-0 bg-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-2 text-lg">
+                <Palette className="h-5 w-5 text-indigo-600" />
+                <span>Design Presets</span>
+              </CardTitle>
+              <CardDescription>
+                Start with a pre-designed theme
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DesignShowcase onSelectPreset={handlePresetSelect} />
+            </CardContent>
+          </Card>
+
+          {/* Live Preview */}
+          <Card className="shadow-sm border-0 bg-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-2 text-lg">
+                <Eye className="h-5 w-5 text-blue-600" />
+                <span>Live Preview</span>
+              </CardTitle>
+              <CardDescription>
+                See how your chatbot will look and behave
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChatbotPreview
+                chatbotId="preview"
+                config={formData}
+                className="w-full"
+              />
+            </CardContent>
+          </Card>
+
+          {/* Configuration Summary */}
+          <Card className="shadow-sm border-0 bg-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-2 text-lg">
+                <MessageSquare className="h-5 w-5 text-green-600" />
+                <span>Configuration Summary</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 gap-3 text-sm">
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-600">Layout:</span>
+                  <span className="font-medium">{formData.ui_layout === 'corner' ? 'Corner Widget' : 'Full Screen'}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-600">Theme:</span>
+                  <span className="font-medium">{formData.ui_theme === 'light' ? 'Light' : 'Dark'}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-600">Voice Enabled:</span>
+                  <span className="font-medium">{formData.voice_enabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-600">Lead Capture:</span>
+                  <span className="font-medium">{formData.data_capture_enabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-600">Auto Model Selection:</span>
+                  <span className="font-medium">{formData.auto_model_selection ? 'Yes' : 'No'}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </main>
+  </div>
+);
 }
