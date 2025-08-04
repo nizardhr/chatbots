@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { supabase } from '@/lib/supabase'; // Import the supabase client
 
 interface FileUploadProps {
   onUpload: (url: string) => void;
@@ -33,40 +34,48 @@ export function FileUpload({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file size
     if (file.size > maxSize * 1024 * 1024) {
       alert(`File too large. Maximum size is ${maxSize}MB.`);
       return;
     }
 
-    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
 
-    // Upload file
     setUploading(true);
     try {
+      // Get the user's session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('User not authenticated for upload.');
+      }
+
       const formData = new FormData();
       formData.append('file', file);
       formData.append('userId', userId);
 
       const response = await fetch('/api/upload-avatar', {
         method: 'POST',
+        headers: {
+            // Send the token in the Authorization header
+            'Authorization': `Bearer ${session.access_token}`,
+        },
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
       }
 
       const data = await response.json();
       onUpload(data.url);
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Failed to upload image. Please try again.');
+      alert(`Failed to upload image: ${error instanceof Error ? error.message : 'Please try again.'}`);
       setPreview(currentUrl || null);
     } finally {
       setUploading(false);

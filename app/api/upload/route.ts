@@ -1,60 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+        return NextResponse.json({ error: 'Unauthorized: No token provided' }, { status: 401 });
+    }
+
+    // Create a new Supabase client for this request, authenticated with the user's token
+    const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            global: {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+        }
+    );
+
+    // Verify the user's identity with the token
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+        return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const chatbotId = formData.get('chatbotId') as string;
-    const userId = formData.get('userId') as string;
+    
+    // Use the authenticated user's ID for security
+    const userId = user.id;
 
-    if (!file || !chatbotId || !userId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: 'Missing file' }, { status: 400 });
     }
 
     // Validate file type
-    const allowedTypes = ['application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid file type. Only images are allowed.' }, { status: 400 });
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 5MB.' }, { status: 400 });
     }
 
     // Generate file path
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${file.name}`;
-    const filePath = `${userId}/${chatbotId}/${fileName}`;
+    const fileName = `avatar-${Date.now()}.${fileExt}`;
+    const filePath = `${userId}/${fileName}`;
 
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage - this will now be authenticated
     const { error: uploadError } = await supabase.storage
-      .from('knowledge-base')
-      .upload(filePath, file);
+      .from('avatars')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
-      return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+      console.error('Supabase upload error:', uploadError);
+      return NextResponse.json({ error: `Failed to upload file: ${uploadError.message}` }, { status: 500 });
     }
 
-    // Save metadata to database
-    const { data, error: dbError } = await supabase
-      .from('knowledge_base_files')
-      .insert({
-        chatbot_id: chatbotId,
-        user_id: userId,
-        filename: file.name,
-        file_path: filePath,
-        file_size: file.size,
-        file_type: fileExt || 'unknown',
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.error('Database error:', dbError);
-      return NextResponse.json({ error: 'Failed to save file metadata' }, { status: 500 });
-    }
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
 
     return NextResponse.json({ 
       success: true,
-      file: data
+      url: publicUrl,
+      filePath: filePath
     });
 
   } catch (error) {

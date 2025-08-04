@@ -1,26 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+// useEffect and useRouter are no longer needed for the redirect
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Mic, Database, Code, Zap, Shield } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Bot, Mic, Database, Code, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HomePage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { user } = await getCurrentUser();
-      if (user) {
-        router.push('/dashboard');
-      }
-    };
-
-    checkAuth();
-  }, [router]);
+  // The automatic redirect logic has been removed.
+  // The page will now display for both logged-in and logged-out users.
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -63,9 +51,9 @@ export default function HomePage() {
                 Start Building Free
               </Button>
             </Link>
-            <Link href="/login">
+            <Link href="/dashboard">
               <Button size="lg" variant="outline">
-                Sign In
+                Go to Dashboard
               </Button>
             </Link>
           </div>
