@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Upload, ArrowLeft, Bot, Mic, Database, Palette, Save, User, Image, MessageSquare, Sparkles } from 'lucide-react';
+import { CalendarIcon, Upload, ArrowLeft, Bot, Mic, Database, Palette, Save, User, Image, MessageSquare, Sparkles, Settings, Eye } from 'lucide-react';
 import { FileUpload } from '@/components/ui/file-upload';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,7 @@ import { DesignPanel } from '@/components/ui/design-panel';
 import { ChatbotPreview } from '@/components/ui/chatbot-preview';
 import { DesignShowcase } from '@/components/ui/design-showcase';
 import Link from 'next/link';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface OpenRouterModel {
   id: string;
@@ -367,406 +368,308 @@ export default function CreateChatbotPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center py-6">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm" className="mr-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
-              <Bot className="h-8 w-8" />
-              <h1 className="text-2xl font-bold text-gray-900">Create New Chatbot</h1>
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+              <div className="flex items-center space-x-3">
+                <Bot className="h-8 w-8 text-blue-600" />
+                <h1 className="text-2xl font-bold text-gray-900">Create New Chatbot</h1>
+              </div>
             </div>
+            <Button
+              type="submit"
+              form="chatbot-form"
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2"
+            >
+              <Save className="h-4 w-4" />
+              <span>{loading ? 'Creating...' : 'Create Chatbot'}</span>
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Configuration */}
-          <div className="space-y-8">
-            <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Bot className="h-5 w-5" />
-                <span>Basic Information</span>
-              </CardTitle>
-              <CardDescription>
-                Configure your chatbot's core settings and AI model
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Chatbot Name *</Label>
-                <Input
-                  id="name"
-                  required
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Enter a name for your chatbot"
-                />
-              </div>
-
-              <FileUpload
-                label="Bot Avatar"
-                description="Upload an avatar image for your chatbot"
-                currentUrl={formData.bot_avatar_url}
-                userId={user?.id || ''}
-                onUpload={(url) => handleInputChange('bot_avatar_url', url)}
-                maxSize={5}
-              />
-
-              <div className="space-y-2">
-                <Label htmlFor="starting_phrase">Starting Phrase</Label>
-                <Input
-                  id="starting_phrase"
-                  value={formData.starting_phrase}
-                  onChange={(e) => handleInputChange('starting_phrase', e.target.value)}
-                  placeholder="Hi there! How can I help you today?"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="prompt">Prompt & Instructions</Label>
-                <Textarea
-                  id="prompt"
-                  value={formData.prompt}
-                  onChange={(e) => handleInputChange('prompt', e.target.value)}
-                  placeholder="Describe how your chatbot should behave and what it should help with..."
-                  rows={4}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="openrouter_api_key">OpenRouter API Key *</Label>
-                <Input
-                  id="openrouter_api_key"
-                  type="password"
-                  required
-                  value={formData.openrouter_api_key}
-                  onChange={(e) => handleInputChange('openrouter_api_key', e.target.value)}
-                  onBlur={loadModels}
-                  placeholder="Enter your OpenRouter API key"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="model">AI Model</Label>
-                <Select
-                  value={formData.model}
-                  onValueChange={(value) => handleInputChange('model', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="meta-llama/llama-3.1-8b-instruct:free">
-                      Llama 3.1 8B (Free)
-                    </SelectItem>
-                    {models.map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="last_payment_date">Last Payment Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !formData.last_payment_date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.last_payment_date ? (
-                        format(formData.last_payment_date, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={formData.last_payment_date}
-                      onSelect={(date) => date && handleInputChange('last_payment_date', date)}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Knowledge Base Upload */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Database className="h-5 w-5" />
-                <span>Knowledge Base</span>
-              </CardTitle>
-              <CardDescription>
-                Upload files to enhance your chatbot's knowledge (PDF, TXT, DOCX)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="files">Upload Files</Label>
-                <div className="flex items-center justify-center w-full">
-                  <label
-                    htmlFor="files"
-                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-                  >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 mb-4 text-gray-500" />
-                      <p className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500">PDF, TXT, DOCX files only</p>
-                    </div>
-                    <input
-                      id="files"
-                      type="file"
-                      multiple
-                      accept=".pdf,.txt,.docx"
-                      onChange={(e) => setFiles(e.target.files)}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-                {files && files.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-600">Selected files:</p>
-                    <ul className="text-sm text-gray-500">
-                      {Array.from(files).map((file, index) => (
-                        <li key={index}>• {file.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Voice Integration */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Mic className="h-5 w-5" />
-                <span>Voice Integration</span>
-              </CardTitle>
-              <CardDescription>
-                Add voice capabilities using ElevenLabs (optional)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="voice_enabled"
-                  checked={formData.voice_enabled}
-                  onCheckedChange={(checked) => handleInputChange('voice_enabled', checked)}
-                />
-                <Label htmlFor="voice_enabled">Enable Voice</Label>
-              </div>
-
-              {formData.voice_enabled && (
-                <>
-                  <Separator />
-                  <div className="space-y-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Left Column - Main Configuration */}
+          <div className="xl:col-span-2 space-y-8">
+            <form id="chatbot-form" onSubmit={handleSubmit} className="space-y-8">
+              
+              {/* Basic Information */}
+              <Card className="shadow-sm border-0 bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center space-x-2 text-lg">
+                    <Bot className="h-5 w-5 text-blue-600" />
+                    <span>Basic Information</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Configure your chatbot's core settings and identity
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="elevenlabs_api_key">ElevenLabs API Key</Label>
+                      <Label htmlFor="name" className="text-sm font-medium">Chatbot Name *</Label>
                       <Input
-                        id="elevenlabs_api_key"
-                        type="password"
-                        value={formData.elevenlabs_api_key}
-                        onChange={(e) => handleInputChange('elevenlabs_api_key', e.target.value)}
-                        onBlur={loadVoices}
-                        placeholder="Enter your ElevenLabs API key"
+                        id="name"
+                        required
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="Enter a name for your chatbot"
+                        className="h-10"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="voice_id">Voice</Label>
+                      <Label htmlFor="owner_name" className="text-sm font-medium">Owner Name</Label>
+                      <Input
+                        id="owner_name"
+                        value={formData.owner_name}
+                        onChange={(e) => handleInputChange('owner_name', e.target.value)}
+                        placeholder="Your name or company"
+                        className="h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <FileUpload
+                    label="Bot Avatar"
+                    description="Upload an avatar image for your chatbot"
+                    currentUrl={formData.bot_avatar_url}
+                    userId={user?.id || ''}
+                    onUpload={(url) => handleInputChange('bot_avatar_url', url)}
+                    maxSize={5}
+                  />
+
+                  <div className="space-y-2">
+                    <Label htmlFor="starting_phrase" className="text-sm font-medium">Starting Phrase</Label>
+                    <Input
+                      id="starting_phrase"
+                      value={formData.starting_phrase}
+                      onChange={(e) => handleInputChange('starting_phrase', e.target.value)}
+                      placeholder="Hi there! How can I help you today?"
+                      className="h-10"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="prompt" className="text-sm font-medium">System Prompt & Instructions</Label>
+                    <Textarea
+                      id="prompt"
+                      value={formData.prompt}
+                      onChange={(e) => handleInputChange('prompt', e.target.value)}
+                      placeholder="Describe how your chatbot should behave and what it should help with..."
+                      rows={4}
+                      className="resize-none"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* AI Model Configuration */}
+              <Card className="shadow-sm border-0 bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center space-x-2 text-lg">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                    <span>AI Model Configuration</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Configure the AI model and API settings for your chatbot
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="openrouter_api_key" className="text-sm font-medium">OpenRouter API Key *</Label>
+                    <Input
+                      id="openrouter_api_key"
+                      type="password"
+                      required
+                      value={formData.openrouter_api_key}
+                      onChange={(e) => handleInputChange('openrouter_api_key', e.target.value)}
+                      placeholder="sk-or-v1-..."
+                      className="h-10"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="model" className="text-sm font-medium">Default AI Model</Label>
                       <Select
-                        value={formData.voice_id}
-                        onValueChange={(value) => handleInputChange('voice_id', value)}
+                        value={formData.model}
+                        onValueChange={(value) => handleInputChange('model', value)}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a voice" />
+                        <SelectTrigger className="h-10">
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {voices.map((voice) => (
-                            <SelectItem key={voice.voice_id} value={voice.voice_id}>
-                              {voice.name} ({voice.category})
+                          {models.map((model) => (
+                            <SelectItem key={model.id} value={model.id}>
+                              {model.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="stability">Stability</Label>
-                        <Input
-                          id="stability"
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.1"
-                          value={formData.voice_settings.stability}
-                          onChange={(e) => handleNestedInputChange('voice_settings', 'stability', parseFloat(e.target.value))}
-                        />
-                        <div className="text-xs text-gray-500 text-center">
-                          {formData.voice_settings.stability}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="similarity_boost">Similarity</Label>
-                        <Input
-                          id="similarity_boost"
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.1"
-                          value={formData.voice_settings.similarity_boost}
-                          onChange={(e) => handleNestedInputChange('voice_settings', 'similarity_boost', parseFloat(e.target.value))}
-                        />
-                        <div className="text-xs text-gray-500 text-center">
-                          {formData.voice_settings.similarity_boost}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="style">Style</Label>
-                        <Input
-                          id="style"
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.1"
-                          value={formData.voice_settings.style}
-                          onChange={(e) => handleNestedInputChange('voice_settings', 'style', parseFloat(e.target.value))}
-                        />
-                        <div className="text-xs text-gray-500 text-center">
-                          {formData.voice_settings.style}
-                        </div>
-                      </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Last Payment Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-10 w-full justify-start text-left font-normal"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {format(formData.last_payment_date, 'PPP')}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={formData.last_payment_date}
+                            onSelect={(date) => date && handleInputChange('last_payment_date', date)}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Data Capture */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Database className="h-5 w-5" />
-                <span>Lead Capture</span>
-              </CardTitle>
-              <CardDescription>
-                Enable conversational lead data collection
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="data_capture_enabled"
-                  checked={formData.data_capture_enabled}
-                  onCheckedChange={(checked) => handleInputChange('data_capture_enabled', checked)}
-                />
-                <Label htmlFor="data_capture_enabled">Enable Lead Capture</Label>
-              </div>
-              {formData.data_capture_enabled && (
-                <p className="text-sm text-gray-600 mt-2">
-                  Your chatbot will naturally ask for contact information during conversations
-                  and store leads in your dashboard.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={formData.auto_model_selection}
+                        onCheckedChange={(checked) => handleInputChange('auto_model_selection', checked)}
+                      />
+                      <Label className="text-sm font-medium">Enable Intelligent Model Selection</Label>
+                    </div>
+                    
+                    {formData.auto_model_selection && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Fallback Models</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          {['gpt-3.5-turbo', 'gpt-4', 'gpt-4o', 'claude-3.5-haiku', 'claude-3-sonnet'].map((model) => (
+                            <div key={model} className="flex items-center space-x-2">
+                              <Checkbox
+                                checked={formData.fallback_models.includes(model)}
+                                onCheckedChange={(checked) => {
+                                  const newFallbacks = checked
+                                    ? [...formData.fallback_models, model]
+                                    : formData.fallback_models.filter((m) => m !== model);
+                                  handleInputChange('fallback_models', newFallbacks);
+                                }}
+                              />
+                              <Label className="text-sm">{model}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Theme Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Palette className="h-5 w-5" />
-                <span>Theme & Appearance</span>
-              </CardTitle>
-              <CardDescription>
-                Customize how your chatbot looks when embedded
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="primaryColor">Primary Color</Label>
-                  <Input
-                    id="primaryColor"
-                    type="color"
-                    value={formData.theme_settings.primaryColor}
-                    onChange={(e) => handleNestedInputChange('theme_settings', 'primaryColor', e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="secondaryColor">Secondary Color</Label>
-                  <Input
-                    id="secondaryColor"
-                    type="color"
-                    value={formData.theme_settings.secondaryColor}
-                    onChange={(e) => handleNestedInputChange('theme_settings', 'secondaryColor', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="welcomeMessage">Welcome Message</Label>
-                <Input
-                  id="welcomeMessage"
-                  value={formData.theme_settings.welcomeMessage}
-                  onChange={(e) => handleNestedInputChange('theme_settings', 'welcomeMessage', e.target.value)}
-                  placeholder="Hi! How can I help you today?"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-              {/* Design Showcase */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Palette className="h-5 w-5" />
-                    <span>Design Presets</span>
+              {/* Knowledge Base */}
+              <Card className="shadow-sm border-0 bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center space-x-2 text-lg">
+                    <Database className="h-5 w-5 text-green-600" />
+                    <span>Knowledge Base</span>
                   </CardTitle>
                   <CardDescription>
-                    Start with a pre-designed theme or create your own from scratch
+                    Upload documents to give your chatbot access to specific information
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <DesignShowcase onSelectPreset={handlePresetSelect} />
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Upload New Files</h3>
+                    <p className="text-gray-600 mb-4">Click to upload or drag and drop PDF, TXT, DOCX files only</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                    >
+                      Choose Files
+                    </Button>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      multiple
+                      accept=".pdf,.txt,.docx"
+                      onChange={(e) => setFiles(e.target.files)}
+                      className="hidden"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Features */}
+              <Card className="shadow-sm border-0 bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center space-x-2 text-lg">
+                    <Settings className="h-5 w-5 text-orange-600" />
+                    <span>Features</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Enable additional features for your chatbot
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          checked={formData.voice_enabled}
+                          onCheckedChange={(checked) => handleInputChange('voice_enabled', checked)}
+                        />
+                        <Label className="text-sm font-medium">Voice Integration</Label>
+                      </div>
+                      {formData.voice_enabled && (
+                        <div className="space-y-2">
+                          <Input
+                            type="password"
+                            placeholder="ElevenLabs API Key"
+                            value={formData.elevenlabs_api_key}
+                            onChange={(e) => handleInputChange('elevenlabs_api_key', e.target.value)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={formData.data_capture_enabled}
+                        onCheckedChange={(checked) => handleInputChange('data_capture_enabled', checked)}
+                      />
+                      <Label className="text-sm font-medium">Lead Capture</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={formData.footer_branding}
+                        onCheckedChange={(checked) => handleInputChange('footer_branding', checked)}
+                      />
+                      <Label className="text-sm font-medium">Show Footer Branding</Label>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Design Customization */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Palette className="h-5 w-5" />
+              <Card className="shadow-sm border-0 bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center space-x-2 text-lg">
+                    <Palette className="h-5 w-5 text-pink-600" />
                     <span>Design Customization</span>
                   </CardTitle>
                   <CardDescription>
@@ -785,25 +688,34 @@ export default function CreateChatbotPage() {
                 </CardContent>
               </Card>
 
-          {/* Submit Button */}
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-black text-white hover:bg-gray-800 flex items-center space-x-2"
-            >
-              <Save className="h-4 w-4" />
-              <span>{loading ? 'Creating...' : 'Create Chatbot'}</span>
-            </Button>
-          </div>
-        </form>
+            </form>
           </div>
 
-          {/* Right Column - Preview */}
+          {/* Right Column - Preview & Summary */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Live Preview</CardTitle>
+            {/* Design Presets */}
+            <Card className="shadow-sm border-0 bg-white">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <Palette className="h-5 w-5 text-indigo-600" />
+                  <span>Design Presets</span>
+                </CardTitle>
+                <CardDescription>
+                  Start with a pre-designed theme
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DesignShowcase onSelectPreset={handlePresetSelect} />
+              </CardContent>
+            </Card>
+
+            {/* Live Preview */}
+            <Card className="shadow-sm border-0 bg-white">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <Eye className="h-5 w-5 text-blue-600" />
+                  <span>Live Preview</span>
+                </CardTitle>
                 <CardDescription>
                   See how your chatbot will look and behave
                 </CardDescription>
@@ -818,30 +730,35 @@ export default function CreateChatbotPage() {
             </Card>
 
             {/* Configuration Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Configuration Summary</CardTitle>
+            <Card className="shadow-sm border-0 bg-white">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <MessageSquare className="h-5 w-5 text-green-600" />
+                  <span>Configuration Summary</span>
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Layout:</span>
-                  <span className="font-medium">{formData.ui_layout === 'corner' ? 'Corner Widget' : 'Full Screen'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Theme:</span>
-                  <span className="font-medium">{formData.ui_theme === 'light' ? 'Light' : 'Dark'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Voice Enabled:</span>
-                  <span className="font-medium">{formData.voice_enabled ? 'Yes' : 'No'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Lead Capture:</span>
-                  <span className="font-medium">{formData.data_capture_enabled ? 'Yes' : 'No'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Auto Model Selection:</span>
-                  <span className="font-medium">{formData.auto_model_selection ? 'Yes' : 'No'}</span>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 text-sm">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Layout:</span>
+                    <span className="font-medium">{formData.ui_layout === 'corner' ? 'Corner Widget' : 'Full Screen'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Theme:</span>
+                    <span className="font-medium">{formData.ui_theme === 'light' ? 'Light' : 'Dark'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Voice Enabled:</span>
+                    <span className="font-medium">{formData.voice_enabled ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Lead Capture:</span>
+                    <span className="font-medium">{formData.data_capture_enabled ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-600">Auto Model Selection:</span>
+                    <span className="font-medium">{formData.auto_model_selection ? 'Yes' : 'No'}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -238,132 +238,108 @@ export function DesignShowcase({ onSelectPreset }: DesignShowcaseProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Palette className="h-5 w-5" />
-            <span>Design Presets</span>
-          </CardTitle>
-          <CardDescription>
-            Choose from pre-designed themes or use them as a starting point for customization
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {DESIGN_PRESETS.map((preset) => (
-              <Card
-                key={preset.name}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  selectedPreset === preset.name ? 'ring-2 ring-blue-500' : ''
-                }`}
-                onClick={() => handlePresetSelect(preset)}
-              >
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold text-sm">{preset.name}</h4>
-                      {selectedPreset === preset.name && (
-                        <Badge variant="secondary" className="text-xs">
-                          Selected
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-600">{preset.description}</p>
-                    
-                    {/* Color Preview */}
-                    <div className="flex space-x-1">
-                      <div
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: preset.colors.background }}
-                      />
-                      <div
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: preset.colors.header }}
-                      />
-                      <div
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: preset.colors.botMessage }}
-                      />
-                      <div
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: preset.colors.userMessage }}
-                      />
-                      <div
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: preset.colors.accent }}
-                      />
-                    </div>
-                    
-                    {/* Features */}
-                    <div className="flex flex-wrap gap-1">
-                      {preset.bubble_config.showTail && (
-                        <Badge variant="outline" className="text-xs">Tail</Badge>
-                      )}
-                      {preset.bubble_config.showTimestamp && (
-                        <Badge variant="outline" className="text-xs">Time</Badge>
-                      )}
-                      {preset.bubble_config.showAvatar && (
-                        <Badge variant="outline" className="text-xs">Avatar</Badge>
-                      )}
-                      {preset.input_config.autoFocus && (
-                        <Badge variant="outline" className="text-xs">Auto-focus</Badge>
-                      )}
-                      {preset.input_config.showCharacterCount && (
-                        <Badge variant="outline" className="text-xs">Counter</Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-3">
+        {DESIGN_PRESETS.map((preset) => (
+          <Card
+            key={preset.name}
+            className={`cursor-pointer transition-all hover:shadow-md border-2 ${
+              selectedPreset === preset.name ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+            }`}
+            onClick={() => handlePresetSelect(preset)}
+          >
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-sm">{preset.name}</h4>
+                  {selectedPreset === preset.name && (
+                    <Badge variant="secondary" className="text-xs">
+                      Selected
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-gray-600">{preset.description}</p>
+                
+                {/* Color Preview */}
+                <div className="flex space-x-1">
+                  <div
+                    className="w-3 h-3 rounded-full border"
+                    style={{ backgroundColor: preset.colors.background }}
+                  />
+                  <div
+                    className="w-3 h-3 rounded-full border"
+                    style={{ backgroundColor: preset.colors.header }}
+                  />
+                  <div
+                    className="w-3 h-3 rounded-full border"
+                    style={{ backgroundColor: preset.colors.botMessage }}
+                  />
+                  <div
+                    className="w-3 h-3 rounded-full border"
+                    style={{ backgroundColor: preset.colors.userMessage }}
+                  />
+                  <div
+                    className="w-3 h-3 rounded-full border"
+                    style={{ backgroundColor: preset.colors.accent }}
+                  />
+                </div>
+                
+                {/* Features */}
+                <div className="flex flex-wrap gap-1">
+                  {preset.bubble_config.showTail && (
+                    <Badge variant="outline" className="text-xs">Tail</Badge>
+                  )}
+                  {preset.bubble_config.showTimestamp && (
+                    <Badge variant="outline" className="text-xs">Time</Badge>
+                  )}
+                  {preset.bubble_config.showAvatar && (
+                    <Badge variant="outline" className="text-xs">Avatar</Badge>
+                  )}
+                  {preset.input_config.autoFocus && (
+                    <Badge variant="outline" className="text-xs">Auto-focus</Badge>
+                  )}
+                  {preset.input_config.showCharacterCount && (
+                    <Badge variant="outline" className="text-xs">Counter</Badge>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Design Features</CardTitle>
-          <CardDescription>
-            Explore the comprehensive customization options available
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center space-y-2">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto">
-                <Palette className="h-6 w-6 text-blue-600" />
-              </div>
-              <h4 className="font-medium text-sm">Color Scheme</h4>
-              <p className="text-xs text-gray-600">14 customizable colors</p>
+      <div className="pt-4 border-t border-gray-200">
+        <h4 className="font-medium text-sm text-gray-900 mb-3">Design Features</h4>
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-blue-100 rounded-full flex items-center justify-center">
+              <Palette className="h-2 w-2 text-blue-600" />
             </div>
-            
-            <div className="text-center space-y-2">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto">
-                <Type className="h-6 w-6 text-green-600" />
-              </div>
-              <h4 className="font-medium text-sm">Typography</h4>
-              <p className="text-xs text-gray-600">Fonts, sizes & weights</p>
-            </div>
-            
-            <div className="text-center space-y-2">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto">
-                <MessageSquare className="h-6 w-6 text-purple-600" />
-              </div>
-              <h4 className="font-medium text-sm">Bubbles</h4>
-              <p className="text-xs text-gray-600">Shadows, tails & animations</p>
-            </div>
-            
-            <div className="text-center space-y-2">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto">
-                <Settings className="h-6 w-6 text-orange-600" />
-              </div>
-              <h4 className="font-medium text-sm">Advanced</h4>
-              <p className="text-xs text-gray-600">Timestamps & effects</p>
-            </div>
+            <span className="text-gray-600">14 Colors</span>
           </div>
-        </CardContent>
-      </Card>
+          
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-green-100 rounded-full flex items-center justify-center">
+              <Type className="h-2 w-2 text-green-600" />
+            </div>
+            <span className="text-gray-600">15+ Fonts</span>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-purple-100 rounded-full flex items-center justify-center">
+              <MessageSquare className="h-2 w-2 text-purple-600" />
+            </div>
+            <span className="text-gray-600">Animations</span>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-orange-100 rounded-full flex items-center justify-center">
+              <Settings className="h-2 w-2 text-orange-600" />
+            </div>
+            <span className="text-gray-600">Advanced</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 } 
