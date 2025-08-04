@@ -1,9 +1,84 @@
-For all designs I ask you to make, have them be beautiful, not cookie cutter. Make webpages that are fully featured and worthy for production.
+Global Instructions Focused on Functionality & Practicality
+Everything below is designed to help you build something that works reliably, serves users, and scales efficiently. No distractions, no aesthetic-first thinking.
 
-When using client-side hooks (useState and useEffect) in a component that's being treated as a Server Component by Next.js, always add the "use client" directive at the top of the file.
+1. Build the Best Functional System First
+Create the minimum version that completes the full loop:
 
-Do not write code that will trigger this error: "Warning: Extra attributes from the server: %s%s""class,style"
+User signs up → creates → uses → gets value → can come back
 
-By default, this template supports JSX syntax with Tailwind CSS classes, the shadcn/ui library, React hooks, and Lucide React for icons. Do not install other packages for UI themes, icons, etc unless absolutely necessary or I request them.
+Don't build multiple features in parallel — complete one vertical slice.
 
-Use icons from lucide-react for logos.
+The first working version should need no customization to deliver value.
+
+2. Make Everything Actionable and Testable
+No dead buttons, placeholders, or “coming soon” sections.
+
+Every screen and component should either work or be removed.
+
+Test from the user’s perspective: what do I actually get from this page?
+
+3. Design Clear, Goal-Oriented Workflows
+Each screen should lead to one clear action — no ambiguity.
+
+Avoid multi-purpose screens. Every page should answer:
+❝ What is the user trying to do right now? ❞
+
+4. Avoid Premature Customization
+Default settings and templates should just work.
+
+Customization is secondary — don’t block use behind configuration.
+
+Let users use first, edit later.
+
+5. Prioritize What Users Need to Do Repeatedly
+Make frequent actions faster than first-time setup.
+
+Example: duplicating bots, accessing embed code, checking leads.
+
+Build shortcuts and batch actions for power users.
+
+6. Show Output Early, Even if It's Not Perfect
+A basic working output > a perfectly configured blank.
+
+Let users see results within 1–2 steps, even with dummy data.
+
+Avoid long setup processes just to see the thing.
+
+7. Make All User Assets Portable and Recoverable
+Let users duplicate, export, clone, reset, or archive anything they create.
+
+No action should feel irreversible unless clearly warned.
+
+Protect user data, but don’t over-restrict access to it.
+
+8. Embed Should Just Work
+Embedding should not require documentation to use.
+
+Always provide a preview and working example.
+
+Embed script should adapt well to different websites with minimal setup.
+
+9. Integrate External Services Only When They Add Core Value
+Don’t build around third-party services unless they make your product function better.
+
+Keep integration setup smooth and non-blocking.
+
+Always have fallbacks or defaults if an external API fails.
+
+10. Keep Control, Feedback, and Recovery in Every Interaction
+Always show the result of a user’s action: saved, failed, or loading.
+
+Let users undo, retry, or confirm before committing.
+
+Hide nothing — expose errors and edge cases in real time.
+
+📌 Practical Guiding Rules
+If it doesn’t work yet, don’t show it.
+
+If it’s not useful often, don’t prioritize it.
+
+If it causes friction, remove or simplify it.
+
+If it saves time, automate or remember it.
+
+If it helps the user do their job faster, ship it.
