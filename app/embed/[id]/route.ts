@@ -1,53 +1,57 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   // Remove .js extension if present
-  const chatbotId = params.id.replace(/\.js$/, '');
-  
-  console.log('=== EMBED SCRIPT DEBUG ===');
-  console.log('Requested chatbot ID:', chatbotId);
-  console.log('Request URL:', request.url);
-  console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log('Supabase Key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  
+  const chatbotId = params.id.replace(/\.js$/, "");
+
+  console.log("=== EMBED SCRIPT DEBUG ===");
+  console.log("Requested chatbot ID:", chatbotId);
+  console.log("Request URL:", request.url);
+  console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log(
+    "Supabase Key exists:",
+    !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
   // CORS headers
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Max-Age': '86400',
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
   };
 
   try {
     // First, let's check if we can connect to Supabase
-    console.log('Attempting to connect to Supabase...');
-    
+    console.log("Attempting to connect to Supabase...");
+
     // Test basic connection
     const { data: testData, error: testError } = await supabase
-      .from('chatbots')
-      .select('count')
+      .from("chatbots")
+      .select("count")
       .limit(1);
-    
-    console.log('Database test query result:', testData);
-    console.log('Database test error:', testError);
-    
+
+    console.log("Database test query result:", testData);
+    console.log("Database test error:", testError);
+
     // Get all chatbots to debug
     const { data: allChatbots, error: allError } = await supabase
-      .from('chatbots')
-      .select('id, name, user_id');
-    
-    console.log('All chatbots in database:', allChatbots);
-    console.log('Database connection error (if any):', allError);
-    console.log('Number of chatbots found:', allChatbots?.length || 0);
-    
+      .from("chatbots")
+      .select("id, name, user_id");
+
+    console.log("All chatbots in database:", allChatbots);
+    console.log("Database connection error (if any):", allError);
+    console.log("Number of chatbots found:", allChatbots?.length || 0);
+
     // Get specific chatbot
     const { data: chatbot, error } = await supabase
-      .from('chatbots')
-      .select(`
+      .from("chatbots")
+      .select(
+        `
         *,
         widget_width,
         widget_height,
@@ -63,121 +67,139 @@ export async function GET(
         voice_config,
         animation_config,
         responsive_config
-      `)
-      .eq('id', chatbotId)
+      `
+      )
+      .eq("id", chatbotId)
       .single();
 
-    console.log('Specific chatbot query result:', chatbot);
-    console.log('Specific chatbot query error:', error);
+    console.log("Specific chatbot query result:", chatbot);
+    console.log("Specific chatbot query error:", error);
 
     if (error || !chatbot) {
-      console.log('Chatbot not found, returning error script');
+      console.log("Chatbot not found, returning error script");
       const errorScript = `
 console.error("Chatbot not found: ${chatbotId}");
 console.log("Raw requested ID: ${params.id}");
 console.log("Cleaned chatbot ID: ${chatbotId}");
-console.log("Available chatbots:", ${JSON.stringify(allChatbots?.map(c => ({ id: c.id, name: c.name })) || [])});
+console.log("Available chatbots:", ${JSON.stringify(
+        allChatbots?.map((c) => ({ id: c.id, name: c.name })) || []
+      )});
 console.log("Database error:", ${JSON.stringify(allError)});
 console.log("Specific chatbot error:", ${JSON.stringify(error)});
-console.log("Environment check - Supabase URL:", "${process.env.NEXT_PUBLIC_SUPABASE_URL}");
-console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY});
+console.log("Environment check - Supabase URL:", "${
+        process.env.NEXT_PUBLIC_SUPABASE_URL
+      }");
+console.log("Environment check - Has Supabase Key:", ${!!process.env
+        .NEXT_PUBLIC_SUPABASE_ANON_KEY});
 `;
-      
-      return new NextResponse(errorScript, { 
+
+      return new NextResponse(errorScript, {
         status: 200, // Return 200 so the script loads
         headers: {
           ...corsHeaders,
-          'Content-Type': 'application/javascript; charset=utf-8',
-        }
+          "Content-Type": "application/javascript; charset=utf-8",
+        },
       });
     }
 
-    console.log('Chatbot found:', chatbot.name);
+    console.log("Chatbot found:", chatbot.name);
 
     // Check payment status
     const lastPayment = new Date(chatbot.last_payment_date);
     const today = new Date();
-    const daysSincePayment = Math.floor((today.getTime() - lastPayment.getTime()) / (1000 * 60 * 60 * 24));
+    const daysSincePayment = Math.floor(
+      (today.getTime() - lastPayment.getTime()) / (1000 * 60 * 60 * 24)
+    );
     const isOverdue = daysSincePayment > 30;
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yvexanchatbots.netlify.app';
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://yvexanchatbots.netlify.app";
 
     // Parse design configuration with defaults
     const designConfig = {
-      layout: chatbot.ui_layout || 'corner',
-      theme: chatbot.ui_theme || 'light',
-      width: chatbot.widget_width || '350px',
-      height: chatbot.widget_height || '500px',
-      borderRadius: chatbot.border_radius || '12px',
-      padding: chatbot.widget_padding || '16px',
-      margin: chatbot.widget_margin || '20px',
+      layout: chatbot.ui_layout || "corner",
+      theme: chatbot.ui_theme || "light",
+      width: chatbot.widget_width || "350px",
+      height: chatbot.widget_height || "500px",
+      borderRadius: chatbot.border_radius || "12px",
+      padding: chatbot.widget_padding || "16px",
+      margin: chatbot.widget_margin || "20px",
       colors: chatbot.color_scheme || {
-        background: '#ffffff',
-        header: '#000000',
-        botMessage: '#f3f4f6',
-        userMessage: '#3b82f6',
-        textPrimary: '#111827',
-        textSecondary: '#6b7280',
-        inputField: '#ffffff',
-        inputBorder: '#d1d5db',
-        buttonPrimary: '#3b82f6',
-        accent: '#8b5cf6'
+        background: "#ffffff",
+        header: "#000000",
+        botMessage: "#f3f4f6",
+        userMessage: "#3b82f6",
+        textPrimary: "#111827",
+        textSecondary: "#6b7280",
+        inputField: "#ffffff",
+        inputBorder: "#d1d5db",
+        buttonPrimary: "#3b82f6",
+        accent: "#8b5cf6",
       },
       typography: chatbot.typography || {
-        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-        headerSize: '18px',
-        messageSize: '14px',
-        inputSize: '14px',
-        headerWeight: '600',
-        messageWeight: '400'
+        fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+        headerSize: "18px",
+        messageSize: "14px",
+        inputSize: "14px",
+        headerWeight: "600",
+        messageWeight: "400",
       },
       header: chatbot.header_config || {
         showHeader: true,
-        customTitle: '',
+        customTitle: "",
         showLogo: true,
         showOwnerName: false,
-        headerHeight: '60px',
-        logoSize: '32px'
+        headerHeight: "60px",
+        logoSize: "32px",
       },
       bubbles: chatbot.bubble_config || {
         showTail: true,
-        alignment: 'left',
-        animation: 'fade',
-        spacing: '8px',
-        maxWidth: '80%',
-        borderRadius: '18px'
+        alignment: "left",
+        animation: "fade",
+        spacing: "8px",
+        maxWidth: "80%",
+        borderRadius: "18px",
+        tailSize: "8px",
+        shadow: "light",
+        showTimestamp: false,
+        showAvatar: false,
       },
       input: chatbot.input_config || {
-        placeholder: 'Type your message...',
-        borderRadius: '24px',
+        placeholder: "Type your message...",
+        borderRadius: "24px",
         showMicButton: true,
         showSendButton: true,
-        buttonStyle: 'modern',
-        height: '48px'
+        buttonStyle: "modern",
+        height: "48px",
+        padding: "12px 16px",
+        buttonSize: "36px",
+        autoFocus: false,
+        showCharacterCount: false,
+        maxCharacters: "500",
       },
       footer: chatbot.footer_config || {
         showPoweredBy: true,
-        customBrandingUrl: 'https://yvexan-agency.com',
-        customBrandingText: 'Powered by Yvexan Agency',
-        showCTA: false
+        customBrandingUrl: "https://yvexan-agency.com",
+        customBrandingText: "Powered by Yvexan Agency",
+        showCTA: false,
       },
       voice: chatbot.voice_config || {
         autoReadMessages: true,
         pushToTalk: false,
-        voiceSpeed: 1.0
+        voiceSpeed: 1.0,
       },
       animation: chatbot.animation_config || {
-        messageAnimation: 'slideUp',
+        messageAnimation: "slideUp",
         typingIndicator: true,
         hoverEffects: true,
-        transitionDuration: '300ms'
+        transitionDuration: "300ms",
       },
       responsive: chatbot.responsive_config || {
-        mobileWidth: '100%',
-        mobileHeight: '100vh',
-        tabletWidth: '400px',
-        tabletHeight: '600px'
-      }
+        mobileWidth: "100%",
+        mobileHeight: "100vh",
+        tabletWidth: "400px",
+        tabletHeight: "600px",
+      },
     };
 
     const embedScript = `
@@ -185,25 +207,27 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
   console.log('=== CHATBOT WIDGET LOADING ===');
   console.log('Chatbot ID: ${chatbotId}');
   console.log('Chatbot Name: ${chatbot.name}');
-  console.log('Owner: ${chatbot.owner_name || 'Not specified'}');
+  console.log('Owner: ${chatbot.owner_name || "Not specified"}');
   console.log('Layout: ${designConfig.layout}');
   console.log('Theme: ${designConfig.theme}');
   console.log('Site URL: ${siteUrl}');
   
   // Prevent multiple instances
-  if (window.chatbotWidget_${chatbotId.replace(/-/g, '_')}) {
+  if (window.chatbotWidget_${chatbotId.replace(/-/g, "_")}) {
     console.log('Chatbot widget already loaded');
     return;
   }
-  window.chatbotWidget_${chatbotId.replace(/-/g, '_')} = true;
+  window.chatbotWidget_${chatbotId.replace(/-/g, "_")} = true;
 
   // Chatbot configuration
   const config = {
     chatbotId: '${chatbotId}',
     name: '${chatbot.name}',
-    ownerName: '${chatbot.owner_name || ''}',
-    avatarUrl: '${chatbot.bot_avatar_url || ''}',
-    startingPhrase: '${chatbot.starting_phrase || 'Hi there! How can I help you today?'}',
+    ownerName: '${chatbot.owner_name || ""}',
+    avatarUrl: '${chatbot.bot_avatar_url || ""}',
+    startingPhrase: '${
+      chatbot.starting_phrase || "Hi there! How can I help you today?"
+    }',
     design: ${JSON.stringify(designConfig)},
     voiceEnabled: ${chatbot.voice_enabled},
     dataCaptureEnabled: ${chatbot.data_capture_enabled},
@@ -388,6 +412,11 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
 
       // Welcome message
       const welcomeMsg = document.createElement('div');
+      const bubbleShadow = config.design.bubbles.shadow === 'none' ? 'none' : 
+                          config.design.bubbles.shadow === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' :
+                          config.design.bubbles.shadow === 'medium' ? '0 2px 8px rgba(0,0,0,0.15)' :
+                          '0 4px 12px rgba(0,0,0,0.2)';
+      
       welcomeMsg.style.cssText = \`
         background: \${colors.botMessage};
         color: \${colors.textPrimary};
@@ -395,12 +424,42 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
         border-radius: \${config.design.bubbles.borderRadius};
         margin-bottom: \${config.design.bubbles.spacing};
         max-width: \${config.design.bubbles.maxWidth};
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: \${bubbleShadow};
         font-size: \${typography.messageSize};
         font-weight: \${typography.messageWeight};
         animation: \${config.design.animation.messageAnimation} \${config.design.animation.transitionDuration} ease-out;
+        position: relative;
       \`;
-      welcomeMsg.textContent = config.startingPhrase;
+      
+      // Add message tail if enabled
+      if (config.design.bubbles.showTail) {
+        welcomeMsg.style.cssText += \`
+          &::after {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: \${config.design.bubbles.tailSize} solid transparent;
+            border-bottom: \${config.design.bubbles.tailSize} solid transparent;
+            border-right: \${config.design.bubbles.tailSize} solid \${colors.botMessage};
+          }
+        \`;
+      }
+      
+      // Add timestamp if enabled
+      if (config.design.bubbles.showTimestamp) {
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        welcomeMsg.innerHTML = \`
+          <div>\${config.startingPhrase}</div>
+          <div style="font-size: 11px; opacity: 0.6; margin-top: 4px;">\${timestamp}</div>
+        \`;
+      } else {
+        welcomeMsg.textContent = config.startingPhrase;
+      }
+      
       chatMessages.appendChild(welcomeMsg);
 
       // Chat input area
@@ -414,9 +473,10 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
       const chatInput = document.createElement('input');
       chatInput.type = 'text';
       chatInput.placeholder = config.design.input.placeholder;
+      chatInput.maxLength = parseInt(config.design.input.maxCharacters) || 500;
       chatInput.style.cssText = \`
         width: calc(100% - \${config.design.input.showSendButton ? '50px' : '0px'});
-        padding: 12px 16px;
+        padding: \${config.design.input.padding};
         border: 1px solid \${colors.inputBorder};
         border-radius: \${config.design.input.borderRadius};
         height: \${config.design.input.height};
@@ -427,6 +487,11 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
         color: \${colors.textPrimary};
         font-family: \${typography.fontFamily};
       \`;
+      
+      // Auto-focus if enabled
+      if (config.design.input.autoFocus) {
+        setTimeout(() => chatInput.focus(), 100);
+      }
 
       chatInputArea.appendChild(chatInput);
 
@@ -434,14 +499,22 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
       if (config.design.input.showSendButton) {
         const sendButton = document.createElement('button');
         sendButton.innerHTML = '→';
+        
+        // Apply button style based on configuration
+        const buttonStyle = config.design.input.buttonStyle;
+        const buttonSize = config.design.input.buttonSize;
+        const borderRadius = buttonStyle === 'rounded' ? '50%' : 
+                           buttonStyle === 'modern' ? '8px' : 
+                           buttonStyle === 'minimal' ? '4px' : '6px';
+        
         sendButton.style.cssText = \`
           position: absolute;
           right: \${config.design.padding};
           bottom: calc(\${config.design.padding} + 8px);
-          width: 36px;
-          height: 36px;
+          width: \${buttonSize};
+          height: \${buttonSize};
           border: none;
-          border-radius: 50%;
+          border-radius: \${borderRadius};
           background: \${colors.buttonPrimary};
           color: white;
           cursor: pointer;
@@ -543,6 +616,11 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
         
         // Add user message
         const userMsg = document.createElement('div');
+        const userBubbleShadow = config.design.bubbles.shadow === 'none' ? 'none' : 
+                                config.design.bubbles.shadow === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' :
+                                config.design.bubbles.shadow === 'medium' ? '0 2px 8px rgba(0,0,0,0.15)' :
+                                '0 4px 12px rgba(0,0,0,0.2)';
+        
         userMsg.style.cssText = \`
           background: \${colors.userMessage};
           color: white;
@@ -556,8 +634,39 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
           font-size: \${typography.messageSize};
           font-weight: \${typography.messageWeight};
           animation: \${config.design.animation.messageAnimation} \${config.design.animation.transitionDuration} ease-out;
+          position: relative;
+          box-shadow: \${userBubbleShadow};
         \`;
-        userMsg.textContent = message;
+        
+        // Add message tail if enabled
+        if (config.design.bubbles.showTail) {
+          userMsg.style.cssText += \`
+            &::after {
+              content: '';
+              position: absolute;
+              right: -8px;
+              top: 50%;
+              transform: translateY(-50%);
+              width: 0;
+              height: 0;
+              border-top: \${config.design.bubbles.tailSize} solid transparent;
+              border-bottom: \${config.design.bubbles.tailSize} solid transparent;
+              border-left: \${config.design.bubbles.tailSize} solid \${colors.userMessage};
+            }
+          \`;
+        }
+        
+        // Add timestamp if enabled
+        if (config.design.bubbles.showTimestamp) {
+          const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          userMsg.innerHTML = \`
+            <div>\${message}</div>
+            <div style="font-size: 11px; opacity: 0.6; margin-top: 4px;">\${timestamp}</div>
+          \`;
+        } else {
+          userMsg.textContent = message;
+        }
+        
         chatMessages.appendChild(userMsg);
 
         // Scroll to bottom
@@ -613,6 +722,11 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
           
           // Add bot response
           const botMsg = document.createElement('div');
+          const botBubbleShadow = config.design.bubbles.shadow === 'none' ? 'none' : 
+                                 config.design.bubbles.shadow === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' :
+                                 config.design.bubbles.shadow === 'medium' ? '0 2px 8px rgba(0,0,0,0.15)' :
+                                 '0 4px 12px rgba(0,0,0,0.2)';
+          
           botMsg.style.cssText = \`
             background: \${colors.botMessage};
             color: \${colors.textPrimary};
@@ -620,13 +734,43 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
             border-radius: \${config.design.bubbles.borderRadius};
             margin-bottom: \${config.design.bubbles.spacing};
             max-width: \${config.design.bubbles.maxWidth};
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: \${botBubbleShadow};
             word-wrap: break-word;
             font-size: \${typography.messageSize};
             font-weight: \${typography.messageWeight};
             animation: \${config.design.animation.messageAnimation} \${config.design.animation.transitionDuration} ease-out;
+            position: relative;
           \`;
-          botMsg.textContent = data.message || 'Sorry, I could not process your request.';
+          
+          // Add message tail if enabled
+          if (config.design.bubbles.showTail) {
+            botMsg.style.cssText += \`
+              &::after {
+                content: '';
+                position: absolute;
+                left: -8px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 0;
+                height: 0;
+                border-top: \${config.design.bubbles.tailSize} solid transparent;
+                border-bottom: \${config.design.bubbles.tailSize} solid transparent;
+                border-right: \${config.design.bubbles.tailSize} solid \${colors.botMessage};
+              }
+            \`;
+          }
+          
+          // Add timestamp if enabled
+          if (config.design.bubbles.showTimestamp) {
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            botMsg.innerHTML = \`
+              <div>\${data.message || 'Sorry, I could not process your request.'}</div>
+              <div style="font-size: 11px; opacity: 0.6; margin-top: 4px;">\${timestamp}</div>
+            \`;
+          } else {
+            botMsg.textContent = data.message || 'Sorry, I could not process your request.';
+          }
+          
           chatMessages.appendChild(botMsg);
 
           // Play audio if available and auto-read is enabled
@@ -714,31 +858,36 @@ console.log("Environment check - Has Supabase Key:", ${!!process.env.NEXT_PUBLIC
 })();
 `;
 
-    console.log('Returning embed script for chatbot:', chatbot.name);
+    console.log("Returning embed script for chatbot:", chatbot.name);
 
     return new NextResponse(embedScript, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'application/javascript; charset=utf-8',
-        'Cache-Control': 'public, max-age=300', // 5 minutes cache
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Cache-Control": "public, max-age=300", // 5 minutes cache
       },
     });
-
   } catch (error) {
-    console.error('Embed script error:', error);
-    
+    console.error("Embed script error:", error);
+
     const errorScript = `
-console.error('Embed script error:', ${JSON.stringify(error instanceof Error ? error.message : String(error))});
+console.error('Embed script error:', ${JSON.stringify(
+      error instanceof Error ? error.message : String(error)
+    )});
 console.log('Raw requested ID: ${params.id}');
 console.log('Cleaned chatbot ID: ${chatbotId}');
-console.log('Full error object:', ${JSON.stringify(error instanceof Error ? { message: error.message, stack: error.stack } : { error: String(error) })});
+console.log('Full error object:', ${JSON.stringify(
+      error instanceof Error
+        ? { message: error.message, stack: error.stack }
+        : { error: String(error) }
+    )});
 `;
-    return new NextResponse(errorScript, { 
+    return new NextResponse(errorScript, {
       status: 200, // Return 200 so the script loads
       headers: {
         ...corsHeaders,
-        'Content-Type': 'application/javascript; charset=utf-8',
-      }
+        "Content-Type": "application/javascript; charset=utf-8",
+      },
     });
   }
 }
@@ -747,10 +896,10 @@ export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Max-Age': '86400',
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Max-Age": "86400",
     },
   });
 }

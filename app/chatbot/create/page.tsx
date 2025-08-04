@@ -23,6 +23,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DesignPanel } from '@/components/ui/design-panel';
 import { ChatbotPreview } from '@/components/ui/chatbot-preview';
+import { DesignShowcase } from '@/components/ui/design-showcase';
 import Link from 'next/link';
 
 interface OpenRouterModel {
@@ -125,7 +126,11 @@ export default function CreateChatbotPage() {
       animation: 'fade',
       spacing: '8px',
       maxWidth: '80%',
-      borderRadius: '18px'
+      borderRadius: '18px',
+      tailSize: '8px',
+      shadow: 'light',
+      showTimestamp: false,
+      showAvatar: false
     },
     input_config: {
       placeholder: 'Type your message...',
@@ -133,7 +138,12 @@ export default function CreateChatbotPage() {
       showMicButton: true,
       showSendButton: true,
       buttonStyle: 'modern',
-      height: '48px'
+      height: '48px',
+      padding: '12px 16px',
+      buttonSize: '36px',
+      autoFocus: false,
+      showCharacterCount: false,
+      maxCharacters: '500'
     },
     footer_config: {
       showPoweredBy: true,
@@ -271,6 +281,16 @@ export default function CreateChatbotPage() {
     } catch (error) {
       console.error('Voice preview error:', error);
     }
+  };
+
+  const handlePresetSelect = (preset: any) => {
+    setFormData(prev => ({
+      ...prev,
+      color_scheme: preset.colors,
+      typography: preset.typography,
+      bubble_config: preset.bubble_config,
+      input_config: preset.input_config,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -725,6 +745,22 @@ export default function CreateChatbotPage() {
               </div>
             </CardContent>
           </Card>
+
+              {/* Design Showcase */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Palette className="h-5 w-5" />
+                    <span>Design Presets</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Start with a pre-designed theme or create your own from scratch
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DesignShowcase onSelectPreset={handlePresetSelect} />
+                </CardContent>
+              </Card>
 
               {/* Design Customization */}
               <Card>
