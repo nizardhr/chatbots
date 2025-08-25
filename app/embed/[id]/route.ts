@@ -66,7 +66,7 @@ console.log("Please check the chatbot ID and try again.");
     const isOverdue = daysSincePayment > 30;
 
     const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || "https://yvexanchatbots.netlify.app";
+      process.env.SITE_URL || "https://yvexanchatbots.netlify.app";
 
     // Parse design configuration with defaults
     const designConfig = {

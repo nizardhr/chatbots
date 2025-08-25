@@ -27,7 +27,7 @@ export function ChatbotPreview({ chatbotId, config, className }: ChatbotPreviewP
   }, [chatbotId, config]);
 
   const generatePreviewHTML = (chatbotId: string, config: any) => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yvexanchatbots.netlify.app';
+    const siteUrl = process.env.SITE_URL || 'https://yvexanchatbots.netlify.app';
     
     return `
 <!DOCTYPE html>

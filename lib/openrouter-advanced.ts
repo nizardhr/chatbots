@@ -57,7 +57,7 @@ export async function chatWithAdvancedRouting(
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://yvexanchatbots.netlify.app',
+          'HTTP-Referer': process.env.SITE_URL || 'https://yvexanchatbots.netlify.app',
           'X-Title': 'Yvexan ChatBot Platform',
         },
         body: JSON.stringify({

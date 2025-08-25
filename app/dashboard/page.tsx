@@ -137,7 +137,7 @@ export default function DashboardPage() {
   };
 
   const handleGetEmbedCode = (chatbotId: string) => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yvexanchatbots.netlify.app';
+    const siteUrl = process.env.SITE_URL || 'https://yvexanchatbots.netlify.app';
     console.log('Generating embed code for chatbot:', chatbotId);
     console.log('Site URL:', siteUrl);
     

@@ -40,7 +40,7 @@ export async function chatWithOpenRouter(
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+      'HTTP-Referer': process.env.SITE_URL || 'https://yvexanchatbots.netlify.app',
       'X-Title': 'ChatBot SaaS Platform',
     },
     body: JSON.stringify({
